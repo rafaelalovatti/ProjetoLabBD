@@ -87,7 +87,11 @@
       </ul>
 
     {% elif user['tipo'] == 'Piloto' %}
-      <p>Você pode apenas visualizar seus dados e relatórios, sem acesso a relatórios detalhados.</p>
+      <ul>
+        <li><a href="/piloto/relatorio6">Relatório 6: Pontos por ano e corrida</a></li>
+        <li><a href="/piloto/relatorio7">Relatório 7: Resultados por status</a></li>
+      </ul>
+
     {% else %}
       <p>Tipo de usuário desconhecido.</p>
     {% endif %}

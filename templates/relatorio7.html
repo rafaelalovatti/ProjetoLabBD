@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório 7 – Resultados por Status</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Relatório 7 – Quantidade de resultados por status</h2>
+    {% if resultados %}
+      <table>
+        <thead>
+          <tr><th>Status</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          {% for r in resultados %}
+            <tr><td>{{ r.status }}</td><td>{{ r.total }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Sem resultados registrados para o piloto.</p>
+    {% endif %}
+    <a href="/dashboard">Voltar</a>
+  </div>
+</body>
+</html>

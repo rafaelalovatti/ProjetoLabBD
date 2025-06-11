@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Cadastrar Escuderia</title>
   <style>
     body {
@@ -16,52 +16,98 @@
     }
     .box {
       background-color: white;
-      padding: 40px;
+      padding: 40px 35px 45px;
       border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.12);
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
       text-align: center;
+      box-sizing: border-box;
     }
     h2 {
       margin-top: 0;
       color: #333;
+      margin-bottom: 30px;
+      font-weight: 700;
+      font-size: 28px;
     }
     input {
       width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
+      padding: 14px 16px;
+      margin: 10px 0 20px;
+      border: 1.8px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+      box-sizing: border-box;
+    }
+    input:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
     }
     button {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background-color: #27ae60;
+      padding: 14px 0;
+      background: linear-gradient(135deg, #007bff, #0056b3);
       color: white;
       border: none;
-      border-radius: 6px;
-      font-weight: bold;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 18px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 5px 15px rgba(0, 123, 255, 0.5);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
     }
-    button:hover {
-      background-color: #1e8449;
+    button:hover, button:focus {
+      background: linear-gradient(135deg, #0056b3, #003d80);
+      box-shadow: 0 6px 18px rgba(0, 86, 179, 0.7);
+      outline: none;
+    }
+    button svg {
+      width: 22px;
+      height: 22px;
+      fill: white;
+      flex-shrink: 0;
     }
     p {
       color: #555;
-      margin-top: 10px;
+      margin-top: 18px;
+      min-height: 22px;
+      font-size: 15px;
     }
     a {
-      display: inline-block;
-      margin-top: 15px;
-      color: #27ae60;
+      display: inline-flex;
+      align-items: center;
+      margin-top: 25px;
+      color: #007bff;
       text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      gap: 8px;
+      transition: color 0.3s ease;
+      user-select: none;
+      justify-content: center;
     }
-    a:hover {
+    a:hover, a:focus {
+      color: #0056b3;
       text-decoration: underline;
+      outline: none;
+    }
+    a svg {
+      width: 18px;
+      height: 18px;
+      fill: #007bff;
+      flex-shrink: 0;
+      transition: fill 0.3s ease;
+    }
+    a:hover svg, a:focus svg {
+      fill: #0056b3;
     }
   </style>
 </head>
@@ -69,14 +115,24 @@
   <div class="box">
     <h2>Cadastrar Escuderia</h2>
     <form method="post">
-      <input name="ref" placeholder="ConstructorRef" required>
-      <input name="name" placeholder="Nome da Escuderia" required>
-      <input name="nationality" placeholder="Nacionalidade" required>
-      <input name="url" placeholder="URL (opcional)">
-      <button type="submit">Cadastrar</button>
+      <input name="ref" placeholder="ConstructorRef" required />
+      <input name="name" placeholder="Nome da Escuderia" required />
+      <input name="nationality" placeholder="Nacionalidade" required />
+      <input name="url" placeholder="URL (opcional)" />
+      <button type="submit" title="Cadastrar Escuderia">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Cadastrar
+      </button>
     </form>
     <p>{{ msg }}</p>
-    <a href="/dashboard">Voltar ao dashboard</a>
+    <a href="/dashboard" title="Voltar ao dashboard">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Voltar ao dashboard
+    </a>
   </div>
 </body>
 </html>
