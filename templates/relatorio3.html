@@ -2,107 +2,111 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Relatório 3 - Corridas e Circuitos</title>
+  <title>Relatório 3 – Corridas e Circuitos</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
     body {
-      font-family: 'Inter', Arial, sans-serif;
+      font-family: 'Inter', sans-serif;
+      background: #f4f6f9;
       margin: 0;
-      background: #f0f2f5;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding-top: 40px;
       color: #2c3e50;
-      line-height: 1.5;
-      font-size: 14px; /* fonte base menor */
     }
 
     .container {
-      max-width: 960px;
-      margin: 40px auto 60px;
-      background: #ffffff;
-      padding: 25px 30px; /* padding um pouco menor */
+      background-color: white;
+      padding: 30px 40px;
       border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      max-width: 960px;
+      width: 100%;
     }
 
     h1 {
+      font-size: 1.8rem;
       font-weight: 700;
-      font-size: 1.8rem; /* menor que antes */
-      color: #34495e;
-      margin-bottom: 25px;
-      border-bottom: 3px solid #2980b9;
-      padding-bottom: 6px;
+      color: #007bff;
+      text-align: center;
+      margin-bottom: 30px;
     }
 
     h2 {
+      font-size: 1.3rem;
       font-weight: 600;
-      color: #2980b9;
+      color: #007bff;
       margin-top: 35px;
-      margin-bottom: 18px;
+      margin-bottom: 15px;
       border-bottom: 2px solid #d6e9fb;
       padding-bottom: 5px;
-      font-size: 1.3rem;
     }
 
     h3 {
+      font-size: 1.1rem;
       font-weight: 600;
       color: #3498db;
       margin-top: 25px;
-      margin-bottom: 12px;
-      font-size: 1.1rem;
+      margin-bottom: 10px;
     }
 
     p strong {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       color: #2c3e50;
     }
 
     table {
       width: 100%;
-      border-collapse: separate;
-      border-spacing: 0 6px; /* menos espaçamento vertical */
-      margin-bottom: 35px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      font-size: 13px;
-    }
-
-    thead tr {
-      background: #2980b9;
-      color: white;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-radius: 8px 8px 0 0;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      font-size: 14px;
     }
 
     thead th {
-      padding: 10px 16px; /* padding reduzido */
-    }
-
-    tbody tr {
-      background: #f9fbfd;
-      transition: background-color 0.3s ease;
-      cursor: default;
-      border-radius: 8px;
-    }
-
-    tbody tr:hover {
-      background: #e8f0fe;
+      background-color: #2980b9;
+      color: white;
+      font-weight: 600;
+      padding: 12px 15px;
+      text-align: left;
     }
 
     tbody td {
-      padding: 10px 16px;
-      color: #34495e;
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
     }
 
-    tbody td:first-child {
+    tbody tr:hover {
+      background-color: #f1f8ff;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #0052cc, #007bff);
+      color: white;
       font-weight: 600;
-      color: #2c3e50;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+      text-decoration: none;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+      font-size: 16px;
+      text-align: center;
+      margin-top: 30px;
     }
 
-    /* Responsividade básica */
+    .back-link:hover {
+      background: linear-gradient(135deg, #003d99, #0056b3);
+      box-shadow: 0 6px 14px rgba(0, 86, 179, 0.5);
+    }
+
     @media (max-width: 768px) {
       .container {
-        padding: 15px 20px;
+        padding: 20px;
       }
 
       h1 {
@@ -121,23 +125,23 @@
         display: block;
       }
 
-      thead tr {
+      thead {
         display: none;
       }
 
       tbody tr {
         margin-bottom: 18px;
         background: #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-radius: 10px;
-        padding: 12px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        padding: 10px;
       }
 
       tbody td {
-        padding-left: 48%;
+        padding-left: 50%;
         position: relative;
         text-align: right;
-        font-size: 13px;
+        border: none;
       }
 
       tbody td::before {
@@ -148,14 +152,14 @@
         padding-left: 10px;
         font-weight: 600;
         text-align: left;
-        color: #2980b9;
+        color: #007bff;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Relatório 3 - Corridas e Circuitos</h1>
+    <h1>Relatório 3 – Corridas e Circuitos</h1>
 
     <h2>1. Total de corridas cadastradas</h2>
     <p><strong>{{ total_corridas }}</strong></p>
@@ -185,7 +189,6 @@
     </table>
 
     <h2>3. Detalhes das corridas por circuito</h2>
-
     {% for cid, circuito in detalhes_por_circuito.items() %}
       <h3>{{ circuito.nome }}</h3>
       <table>
@@ -207,6 +210,10 @@
         </tbody>
       </table>
     {% endfor %}
+
+    <div style="text-align: center;">
+      <a class="back-link" href="/relatorios">Voltar aos relatórios</a>
+    </div>
   </div>
 </body>
 </html>

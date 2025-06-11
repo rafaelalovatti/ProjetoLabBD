@@ -1,86 +1,87 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <title>Relatório 5 – Resultados por Status</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f6f9;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding-top: 40px;
-      color: #333;
-    }
-    .container {
-      background-color: white;
-      padding: 30px 40px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
-      max-width: 700px;
-      width: 100%;
-      text-align: center;
-    }
-    h2 {
-      margin-top: 0;
-      margin-bottom: 25px;
-      color: #007bff;
-      font-weight: 700;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 30px;
-    }
-    thead th {
-      background-color: #f0f2f5;
-      color: #333;
-      padding: 12px 15px;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-    tbody td {
-      border: 1px solid #ddd;
-      padding: 12px 15px;
-      color: #555;
-      text-align: left;
-    }
-    tbody tr:hover {
-      background-color: #e6f0ff;
-    }
-    p {
-      color: #555;
-      font-size: 1.1em;
-      margin-bottom: 30px;
-    }
-    a.back-link {
-      display: inline-block;
-      padding: 12px 30px;
-      background: linear-gradient(135deg, #0052cc, #007bff);
-      color: white;
-      font-weight: 600;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,123,255,0.3);
-      text-decoration: none;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
-      font-size: 16px;
-    }
-    a.back-link:hover, a.back-link:focus {
-      background: linear-gradient(135deg, #003d99, #0056b3);
-      box-shadow: 0 6px 14px rgba(0,86,179,0.5);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Relatório 5 – Resultados por Status</h2>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Relatório 5 – Resultados por Status</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding-top: 40px;
+        color: #333;
+      }
+      .container {
+        background-color: white;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+        max-width: 700px;
+        width: 100%;
+        text-align: center;
+      }
+      h2 {
+        margin-top: 0;
+        margin-bottom: 25px;
+        color: #007bff;
+        font-weight: 700;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+      thead th {
+        background-color: #f0f2f5;
+        color: #333;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      tbody td {
+        border: 1px solid #ddd;
+        padding: 12px 15px;
+        color: #555;
+        text-align: left;
+      }
+      tbody tr:hover {
+        background-color: #e6f0ff;
+      }
+      p {
+        color: #555;
+        font-size: 1.1em;
+        margin-bottom: 30px;
+      }
+      a.back-link {
+        display: inline-block;
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #0052cc, #007bff);
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        text-decoration: none;
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+        user-select: none;
+        font-size: 16px;
+      }
+      a.back-link:hover,
+      a.back-link:focus {
+        background: linear-gradient(135deg, #003d99, #0056b3);
+        box-shadow: 0 6px 14px rgba(0, 86, 179, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Relatório 5 – Resultados por Status</h2>
 
-    {% if resultados %}
+      {% if resultados %}
       <table>
         <thead>
           <tr>
@@ -90,18 +91,17 @@
         </thead>
         <tbody>
           {% for r in resultados %}
-            <tr>
-              <td>{{ r.status_name }}</td>
-              <td>{{ r.total }}</td>
-            </tr>
+          <tr>
+            <td>{{ r.status_name }}</td>
+            <td>{{ r.total }}</td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
-    {% else %}
+      {% else %}
       <p>Não há resultados registrados para sua escuderia.</p>
-    {% endif %}
-
-    <a class="back-link" href="/dashboard">Voltar</a>
-  </div>
-</body>
+      {% endif %}
+      <a class="back-link" href="/relatorios">Voltar aos relatórios</a>
+    </div>
+  </body>
 </html>

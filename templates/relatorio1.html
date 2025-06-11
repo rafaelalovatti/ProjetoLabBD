@@ -1,80 +1,107 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <title>Relatório 1 - Resultados por Status</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-    }
-    table {
-      margin: 20px auto;
-      border-collapse: collapse;
-      width: 80%;
-      max-width: 600px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 15px 20px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-    th {
-      background-color: #3498db;
-      color: white;
-      font-weight: bold;
-    }
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-    a {
-      display: block;
-      text-align: center;
-      margin-top: 30px;
-      text-decoration: none;
-      color: #3498db;
-      font-weight: bold;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <h1>Relatório 1: Quantidade de Resultados por Status</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Relatório 1 – Resultados por Status</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding-top: 40px;
+        color: #333;
+      }
+      .container {
+        background-color: white;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+        max-width: 700px;
+        width: 100%;
+        text-align: center;
+      }
+      h2 {
+        margin-top: 0;
+        margin-bottom: 25px;
+        color: #007bff;
+        font-weight: 700;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+      thead th {
+        background-color: #f0f2f5;
+        color: #333;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      tbody td {
+        border: 1px solid #ddd;
+        padding: 12px 15px;
+        color: #555;
+        text-align: left;
+      }
+      tbody tr:hover {
+        background-color: #e6f0ff;
+      }
+      p {
+        color: #555;
+        font-size: 1.1em;
+        margin-bottom: 30px;
+      }
+      a.back-link {
+        display: inline-block;
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #0052cc, #007bff);
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        text-decoration: none;
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+        user-select: none;
+        font-size: 16px;
+      }
+      a.back-link:hover,
+      a.back-link:focus {
+        background: linear-gradient(135deg, #003d99, #0056b3);
+        box-shadow: 0 6px 14px rgba(0, 86, 179, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Relatório 1 – Quantidade de Resultados por Status</h2>
 
-  {% if resultados %}
-    <table>
-      <thead>
-        <tr>
-          <th>Status</th>
-          <th>Quantidade</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for status, qtd in resultados %}
+      {% if resultados %}
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Quantidade</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for status, qtd in resultados %}
           <tr>
             <td>{{ status }}</td>
             <td>{{ qtd }}</td>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p style="text-align:center; font-style: italic;">Nenhum dado disponível para exibir.</p>
-  {% endif %}
-
-  <a href="/relatorios">Voltar aos relatórios</a>
-</body>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p>Nenhum dado disponível para exibir.</p>
+      {% endif %}
+      <a class="back-link" href="/relatorios">Voltar aos relatórios</a>
+    </div>
+  </body>
 </html>
