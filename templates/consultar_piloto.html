@@ -94,9 +94,9 @@
         <tbody>
           {% for r in resultados %}
           <tr>
-            <td>{{ r.forename }} {{ r.surname }}</td>
-            <td>{{ r.dob }}</td>
-            <td>{{ r.nationality }}</td>
+            <td>{{ r[0] }}</td>
+            <td>{{ r[1] }}</td>
+            <td>{{ r[2] }}</td>
           </tr>
           {% endfor %}
         </tbody>

@@ -1,59 +1,55 @@
-import os
-import sqlite3
 from flask import Flask, render_template, request, redirect, session, g
 from datetime import datetime
-import math
-import csv
+import psycopg2
 
 app = Flask(__name__)
 app.secret_key = "segredo"
-DATABASE = "f1.db"
 
-
-def init_db():
-    if not os.path.exists(DATABASE):
-        with sqlite3.connect(DATABASE) as conn:
-            c = conn.cursor()
-            c.executescript(open("schema.sql", "r").read())
-
+DATABASE = {
+    "dbname": "atividade2",
+    "user": "jpdm",
+    "password": "jp2202",
+    "host": "localhost",
+    "port": "5432",
+}
 
 def get_db():
-    db = getattr(g, "_database", None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
-    return db
+    if 'db' not in g:
+        g.db = psycopg2.connect(**DATABASE)
+        g.db.autocommit = True
+    return g.db
 
-
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, "_database", None)
+def close_db(e=None):
+    db = g.pop('db', None)
     if db is not None:
         db.close()
-
 
 @app.route("/", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
         db = get_db()
-        cur = db.execute(
-            "SELECT * FROM users WHERE login = ? AND password = ?",
-            (request.form["login"], request.form["password"]),
-        )
-        user = cur.fetchone()
-        if user:
-            session["user"] = dict(user)
-            db.execute(
-                "INSERT INTO users_log (userid, login_time) VALUES (?, ?)",
-                (user["userid"], datetime.now()),
-            )
-            db.commit()
-            return redirect("/dashboard")
-        else:
-            error = "Login inválido"
+        try:
+            with db.cursor() as cur:
+                cur.execute(
+                    "SELECT * FROM USERS WHERE Login = %s AND Password = crypt(%s, Password)",
+                    (request.form["login"], request.form["password"]),
+                )
+                user = cur.fetchone()
+                if user:
+                    session["user"] = dict(zip([col[0] for col in cur.description], user))
+                    cur.execute(
+                        "INSERT INTO Users_Log (Userid, LoginTime) VALUES (%s, %s)",
+                        (user[0], datetime.now()),
+                    )
+                    return redirect("/dashboard")
+                else:
+                    error = "Login inválido"
+        except Exception as e:
+            print(f"Erro no login: {e}")
+        finally:
+            close_db()
     return render_template("login.html", error=error)
-
 
 @app.route("/dashboard")
 def dashboard():
@@ -61,39 +57,56 @@ def dashboard():
         return redirect("/")
     user = session["user"]
     db = get_db()
-    tipo = user["tipo"]
-    if tipo == "Administrador":
-        extra_info = "Administrador - acesso total"
-        resumo = {
-            "Total de usuários": db.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-        }
-    elif tipo == "Escuderia":
-        escuderia = user["idoriginal"]
-        count = db.execute(
-            "SELECT COUNT(*) FROM users WHERE tipo = 'Piloto' AND idoriginal = ?",
-            (escuderia,),
-        ).fetchone()[0]
-        extra_info = f"Escuderia: {escuderia}"
-        resumo = {"Pilotos vinculados": count}
-    elif tipo == "Piloto":
-        piloto = user["idoriginal"]
-        full_name = db.execute(
-            "SELECT forename || ' ' || surname FROM pilotos WHERE driverref = ?",
-            (piloto,),
-        ).fetchone()
-        extra_info = f"Piloto: {full_name[0] if full_name else piloto}"
-        resumo = {}
-    else:
-        extra_info = "Tipo desconhecido"
-        resumo = {}
+    try:
+        with db.cursor() as cur:
+            tipo = user["tipo"]
+            if tipo == "Administrador":
+                extra_info = "Administrador - acesso total"
+                cur.execute("SELECT COUNT(*) FROM USERS")
+                resumo = {"Total de usuários": cur.fetchone()[0]}
+            elif tipo == "Escuderia":
+                escuderia_id = user["idoriginal"]
+                cur.execute(
+                    """
+                    SELECT c.Name
+                    FROM Constructors c
+                    WHERE c.ConstructorId = %s
+                    """,
+                    (escuderia_id,),
+                )
+                escuderia_nome = cur.fetchone()
+                cur.execute(
+                    """
+                    SELECT COUNT(DISTINCT r.DriverId)
+                    FROM Results r
+                    WHERE r.ConstructorId = %s
+                    """,
+                    (escuderia_id,),
+                )
+                count_pilotos = cur.fetchone()[0]
+                extra_info = f"Escuderia: {escuderia_nome[0] if escuderia_nome else escuderia_id}"
+                resumo = {"Pilotos vinculados": count_pilotos}
+            elif tipo == "Piloto":
+                piloto = user["idoriginal"]
+                cur.execute(
+                    "SELECT Forename || ' ' || Surname FROM Driver WHERE DriverId = %s",
+                    (piloto,),
+                )
+                full_name = cur.fetchone()
+                extra_info = f"Piloto: {full_name[0] if full_name else piloto}"
+                resumo = {}
+            else:
+                extra_info = "Tipo desconhecido"
+                resumo = {}
+    finally:
+        close_db()
     return render_template("dashboard.html", user=user, extra=extra_info, resumo=resumo)
 
 
-@app.route("/admin/cadastrar_piloto", methods=["GET", "POST"])
+@app.route("/cadastrar_piloto", methods=["GET", "POST"])
 def cadastrar_piloto():
     if "user" not in session or session["user"]["tipo"] != "Administrador":
         return redirect("/")
-
     msg = ""
     if request.method == "POST":
         driverref = request.form["driverref"]
@@ -103,104 +116,97 @@ def cadastrar_piloto():
         surname = request.form["surname"]
         dob = request.form["dob"]
         nationality = request.form["nationality"]
-
         login = f"{driverref}_d"
-        password = driverref  # senha padrão
+        password = driverref
         tipo = "Piloto"
-
         db = get_db()
         try:
-            db.execute(
-                """
-                INSERT INTO drivers 
-                (driverref, number, code, forename, surname, dob, nationality)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-                (driverref, number, code, forename, surname, dob, nationality),
-            )
-
-            db.execute(
-                """
-                INSERT INTO users (login, password, tipo, idoriginal)
-                VALUES (?, ?, ?, ?)
-            """,
-                (login, password, tipo, driverref),
-            )
-
-            db.commit()
-            msg = "Piloto cadastrado com sucesso!"
-        except sqlite3.IntegrityError:
+            with db.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO Driver 
+                    (DriverRef, Number, Code, Forename, Surname, Dob, Nationality)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING DriverId
+                    """,
+                    (driverref, number, code, forename, surname, dob, nationality),
+                )
+                driver_id = cur.fetchone()[0]
+                cur.execute(
+                    """
+                    INSERT INTO USERS (Login, Password, Tipo, IdOriginal)
+                    VALUES (%s, crypt(%s, gen_salt('bf')), %s, %s)
+                    """,
+                    (login, password, tipo, driver_id),
+                )
+                msg = "Piloto cadastrado com sucesso!"
+        except psycopg2.IntegrityError:
             msg = "Erro: já existe piloto com esse driverref ou login."
-
+        finally:
+            close_db()
     return render_template("cadastrar_piloto.html", msg=msg)
 
-
-@app.route("/admin/consultar_piloto", methods=["GET", "POST"])
+@app.route("/consultar_piloto", methods=["GET", "POST"])
 def consultar_piloto():
     if "user" not in session or session["user"]["tipo"] != "Escuderia":
         return redirect("/")
-
     resultados = []
     msg = ""
     if request.method == "POST":
         forename = request.form["forename"].strip().lower()
         escuderia = session["user"]["idoriginal"]
         db = get_db()
-
-        resultados = db.execute(
-            """
-            SELECT d.forename, d.surname, d.dob, d.nationality
-            FROM results r
-            JOIN drivers d ON r.driverid = d.driverid
-            JOIN constructors c ON r.constructorid = c.constructorid
-            WHERE LOWER(d.forename) = ? AND c.constructorref = ?
-            GROUP BY d.driverid
-        """,
-            (forename, escuderia),
-        ).fetchall()
-
-        if not resultados:
-            msg = "Nenhum piloto encontrado com esse nome e que tenha corrido pela sua escuderia."
-
+        try:
+            with db.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT d.Forename, d.Surname, d.Dob, d.Nationality
+                    FROM Results r
+                    JOIN Driver d ON r.DriverId = d.DriverId
+                    JOIN Constructors c ON r.ConstructorId = c.ConstructorId
+                    WHERE LOWER(d.Forename) = %s AND c.ConstructorId = %s
+                    GROUP BY d.DriverId, d.Forename, d.Surname, d.Dob, d.Nationality
+                    """,
+                    (forename, escuderia),
+                )
+                resultados = cur.fetchall()
+                if not resultados:
+                    msg = "Nenhum piloto encontrado com esse nome e que tenha corrido pela sua escuderia."
+        finally:
+            close_db()
     return render_template("consultar_forename.html", resultados=resultados, msg=msg)
-
 
 @app.route("/cadastrar_escuderia", methods=["GET", "POST"])
 def cadastrar_escuderia():
     if "user" not in session or session["user"]["tipo"] != "Administrador":
         return redirect("/")
-
     msg = ""
     if request.method == "POST":
         ref = request.form["ref"]
         name = request.form["name"]
         nationality = request.form["nationality"]
         url = request.form.get("url", "")
-
         login = f"{ref}_c"
         password = ref
         tipo = "Escuderia"
-
         db = get_db()
         try:
-            db.execute(
-                "INSERT INTO constructors (constructorref, name, nationality, url) VALUES (?, ?, ?, ?)",
-                (ref, name, nationality, url),
-            )
-            db.execute(
-                "INSERT INTO users (login, password, tipo, idoriginal) VALUES (?, ?, ?, ?)",
-                (login, password, tipo, ref),
-            )
-            db.commit()
-            msg = "Escuderia cadastrada com sucesso!"
-        except sqlite3.IntegrityError:
+            with db.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO Constructors (ConstructorRef, Name, Nationality, Url) VALUES (%s, %s, %s, %s) RETURNING ConstructorId",
+                    (ref, name, nationality, url),
+                )
+                constructor_id = cur.fetchone()[0]
+                cur.execute(
+                    "INSERT INTO USERS (Login, Password, Tipo, IdOriginal) VALUES (%s, crypt(%s, gen_salt('bf')), %s, %s)",
+                    (login, password, tipo, constructor_id),
+                )
+                msg = "Escuderia cadastrada com sucesso!"
+        except psycopg2.IntegrityError:
             msg = "Erro: Escuderia já existe."
-
+        finally:
+            close_db()
     return render_template("cadastrar_escuderia.html", msg=msg)
-
-
-# ROTAS RELATÓRIOS
-
 
 @app.route("/relatorios")
 def relatorios():
@@ -212,95 +218,102 @@ def relatorios():
 
     return render_template("relatorios.html", user=user)
 
-
-@app.route("/admin/relatorio1")
+@app.route("/relatorio1")
 def relatorio1():
     if "user" not in session or session["user"]["tipo"] != "Administrador":
         return redirect("/")
     db = get_db()
-    resultados = db.execute(
-        """
-        SELECT s.status_name, COUNT(*) as total
-        FROM results r
-        JOIN status s ON r.statusid = s.statusid
-        GROUP BY s.status_name
-        ORDER BY total DESC
-        """
-    ).fetchall()
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT s.Status, COUNT(*) as total
+                FROM Results r
+                JOIN Status s ON r.StatusId = s.StatusId
+                GROUP BY s.Status
+                ORDER BY total DESC
+                """
+            )
+            resultados = cur.fetchall()
+    finally:
+        close_db()
     return render_template("relatorio1.html", resultados=resultados)
 
-
-@app.route("/admin/relatorio2")
+@app.route("/relatorio2")
 def relatorio2():
     if "user" not in session or session["user"]["tipo"] != "Administrador":
         return redirect("/")
     db = get_db()
-    # Exemplo: média de pontos por corrida
-    data = db.execute(
-        """
-        SELECT r.raceid, c.name as circuit, COUNT(*) AS qtd_pilotos, AVG(r.points) as media_pontos
-        FROM results r
-        JOIN races ra ON r.raceid = ra.raceid
-        JOIN circuits c ON ra.circuitid = c.circuitid
-        GROUP BY r.raceid
-        ORDER BY r.raceid DESC
-        LIMIT 20
-        """
-    ).fetchall()
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT r.RaceId, c.Name as circuit, COUNT(*) AS qtd_pilotos, AVG(r.Points) as media_pontos
+                FROM Results r
+                JOIN Races ra ON r.RaceId = ra.RaceId
+                JOIN Circuits c ON ra.CircuitId = c.CircuitId
+                GROUP BY r.RaceId, c.Name
+                ORDER BY r.RaceId DESC
+                LIMIT 20
+                """
+            )
+            data = cur.fetchall()
+    finally:
+        close_db()
     return render_template("relatorio2.html", data=data)
 
-
-@app.route("/admin/relatorio3")
+@app.route("/relatorio3")
 def relatorio3():
     if "user" not in session or session["user"]["tipo"] != "Administrador":
         return redirect("/")
     db = get_db()
-
-    escuderias = db.execute(
-        """
-        SELECT c.name, COUNT(DISTINCT u.userid) as qtd_pilotos, COALESCE(SUM(r.points), 0) as total_pontos
-        FROM constructors c
-        LEFT JOIN users u ON u.tipo = 'Piloto' AND u.idoriginal = c.constructorref
-        LEFT JOIN results r ON r.constructorid = c.constructorid
-        GROUP BY c.name
-        ORDER BY total_pontos DESC
-        """
-    ).fetchall()
-
-    total_corridas = db.execute("SELECT COUNT(*) FROM races").fetchone()[0]
-
-    voltas_por_circuito = db.execute(
-        """
-        SELECT ci.name as circuito, MIN(r.laps) as min_laps, AVG(r.laps) as avg_laps, MAX(r.laps) as max_laps
-        FROM races r
-        JOIN circuits ci ON r.circuitid = ci.circuitid
-        GROUP BY ci.name
-        """
-    ).fetchall()
-
-    detalhes_corridas = db.execute(
-        """
-        SELECT ci.name as circuito, r.name as corrida, r.laps, r.time
-        FROM races r
-        JOIN circuits ci ON r.circuitid = ci.circuitid
-        ORDER BY ci.name, r.name
-        """
-    ).fetchall()
-
-    # Agrupar corridas por circuito
-    detalhes_por_circuito = {}
-    for row in detalhes_corridas:
-        circuito = row["circuito"]
-        if circuito not in detalhes_por_circuito:
-            detalhes_por_circuito[circuito] = {"nome": circuito, "corridas": []}
-        detalhes_por_circuito[circuito]["corridas"].append(
-            {
-                "corrida_nome": row["corrida"],
-                "laps": row["laps"],
-                "time": row["time"],
-            }
-        )
-
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT c.Name, COUNT(DISTINCT u.Userid) as qtd_pilotos, COALESCE(SUM(r.Points), 0) as total_pontos
+                FROM Constructors c
+                LEFT JOIN USERS u ON u.Tipo = 'Piloto' AND u.IdOriginal = c.ConstructorId
+                LEFT JOIN Results r ON r.ConstructorId = c.ConstructorId
+                GROUP BY c.Name
+                ORDER BY total_pontos DESC
+                """
+            )
+            escuderias = cur.fetchall()
+            cur.execute("SELECT COUNT(*) FROM Races")
+            total_corridas = cur.fetchone()[0]
+            cur.execute(
+                """
+                SELECT ci.Name as circuito, MIN(r.Laps) as min_laps, AVG(r.Laps) as avg_laps, MAX(r.Laps) as max_laps
+                FROM Races r
+                JOIN Circuits ci ON r.CircuitId = ci.CircuitId
+                GROUP BY ci.Name
+                """
+            )
+            voltas_por_circuito = cur.fetchall()
+            cur.execute(
+                """
+                SELECT ci.Name as circuito, r.Name as corrida, r.Laps, r.Time
+                FROM Races r
+                JOIN Circuits ci ON r.CircuitId = ci.CircuitId
+                ORDER BY ci.Name, r.Name
+                """
+            )
+            detalhes_corridas = cur.fetchall()
+            detalhes_por_circuito = {}
+            for row in detalhes_corridas:
+                circuito = row[0]
+                if circuito not in detalhes_por_circuito:
+                    detalhes_por_circuito[circuito] = {"nome": circuito, "corridas": []}
+                detalhes_por_circuito[circuito]["corridas"].append(
+                    {
+                        "corrida_nome": row[1],
+                        "laps": row[2],
+                        "time": row[3],
+                    }
+                )
+    finally:
+        close_db()
     return render_template(
         "relatorio3.html",
         escuderias=escuderias,
@@ -309,208 +322,190 @@ def relatorio3():
         detalhes_por_circuito=detalhes_por_circuito,
     )
 
-
 # ----------------------------------ESCUDERIA ---------------------
-
-
 @app.route("/escuderia/consultar_piloto", methods=["GET", "POST"])
 def escuderia_consultar_piloto():
     if "user" not in session or session["user"]["tipo"] != "Escuderia":
         return redirect("/")
-
+    
+    user = session["user"]
+    db = get_db()
     resultados = []
-    if request.method == "POST":
-        forename = request.form.get("forename")
-        constructorref = session["user"]["idoriginal"]
+    try:
+        with db.cursor() as cur:
+            if request.method == "POST":
+                forename = request.form.get("forename")
+                escuderia_id = user["idoriginal"]
+                if forename:
+                    cur.execute(
+                        """
+                        SELECT 
+                            d.Forename || ' ' || d.Surname AS Nome_Completo, 
+                            d.Dob, 
+                            d.Nationality
+                        FROM Results r
+                        JOIN Driver d ON r.DriverId = d.DriverId
+                        WHERE r.ConstructorId = %s AND LOWER(d.Forename) = LOWER(%s)
+                        GROUP BY d.DriverId, d.Forename, d.Surname, d.Dob, d.Nationality
+                        ORDER BY Nome_Completo
+                        """,
+                        (escuderia_id, forename),
+                    )
+                    resultados = cur.fetchall()
+                else:
+                    print("forename vazio ou não fornecido")
+    finally:
+        close_db()
+    
+    return render_template("consultar_piloto.html", user=user, resultados=resultados)
 
-        resultados = (
-            get_db()
-            .execute(
-                """
-            SELECT d.forename, d.surname, d.dob, d.nationality
-            FROM drivers d
-            JOIN results r ON d.driverid = r.driverid
-            JOIN constructors c ON r.constructorid = c.constructorid
-            WHERE d.forename = ? AND c.constructorref = ?
-            GROUP BY d.driverid
-        """,
-                (forename, constructorref),
-            )
-            .fetchall()
-        )
-
-    return render_template("consultar_piloto.html", resultados=resultados)
-
-
-@app.route("/escuderia/inserir_piloto", methods=["GET", "POST"])
-def inserir_piloto():
+@app.route("/escuderia/relatorio4")
+def escuderia_relatorio4():
     if "user" not in session or session["user"]["tipo"] != "Escuderia":
         return redirect("/")
-
-    mensagem = ""
-    if request.method == "POST":
-        arquivo = request.files.get("arquivo")
-        if arquivo:
-            linhas = arquivo.read().decode("utf-8").splitlines()
-            db = get_db()
-            inseridos, existentes = 0, 0
-
-            for linha in linhas:
-                dados = linha.strip().split(",")
-                if len(dados) < 7:
-                    continue
-                driverref, number, code, forename, surname, dob, nationality = dados[:7]
-                # Verifica duplicidade
-                existe = db.execute(
-                    """
-                    SELECT 1 FROM drivers WHERE forename = ? AND surname = ?
+    
+    user = session["user"]
+    escuderia_id = user["idoriginal"]
+    db = get_db()
+    pilotos = []
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT FullName AS piloto, Wins AS vitorias
+                FROM Public.ReportDriverWinsByConstructor(%s)
                 """,
-                    (forename, surname),
-                ).fetchone()
-                if existe:
-                    existentes += 1
-                    continue
-                # Insere piloto
-                db.execute(
-                    """
-                    INSERT INTO drivers (driverref, number, code, forename, surname, dob, nationality)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                (escuderia_id,),
+            )
+            pilotos = cur.fetchall()
+    finally:
+        close_db()
+    
+    return render_template("relatorio4.html", user=user, pilotos=pilotos)
+
+from psycopg2.extras import RealDictCursor
+
+@app.route("/escuderia/relatorio5")
+def escuderia_relatorio5():
+    if "user" not in session or session["user"]["tipo"] != "Escuderia":
+        print(f"Redirecionando: sessão inválida - {session.get('user')}")
+        return redirect("/")
+    
+    user = session["user"]
+    escuderia_id = user["idoriginal"]
+    print(f"Escuderia ID: {escuderia_id}")
+    db = get_db()
+    resultados = []
+    try:
+        with db.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT Status AS status_name, ResultCount AS total
+                FROM Public.ReportResultsByStatus(%s)
                 """,
-                    (
-                        driverref,
-                        number or None,
-                        code or None,
-                        forename,
-                        surname,
-                        dob,
-                        nationality,
-                    ),
-                )
-                db.commit()
-                inseridos += 1
+                (escuderia_id,),
+            )
+            resultados = cur.fetchall()
+            print(f"Resultados: {resultados}")
+    except Exception as e:
+        print(f"Erro na consulta: {e}")
+    finally:
+        close_db()
+    
+    return render_template("relatorio5.html", user=user, resultados=resultados)
 
-            mensagem = f"{inseridos} piloto(s) inserido(s). {existentes} já existiam."
-
-    return render_template("inserir_piloto.html", mensagem=mensagem)
-
+from psycopg2.extras import RealDictCursor
+import csv
+from io import StringIO
 
 @app.route("/escuderia/upload_pilotos", methods=["GET", "POST"])
 def escuderia_upload_pilotos():
     if "user" not in session or session["user"]["tipo"] != "Escuderia":
+        print(f"Redirecionando: sessão inválida - {session.get('user')}")
         return redirect("/")
-
+    
+    user = session["user"]
+    escuderia_id = user["idoriginal"]
+    print(f"Escuderia ID: {escuderia_id}")
     msg = ""
+    
     if request.method == "POST":
         file = request.files.get("arquivo")
         if not file:
             msg = "Nenhum arquivo enviado."
         else:
             db = get_db()
-            escuderia_ref = session["user"]["idoriginal"]
-            csvfile = file.stream.read().decode("utf-8").splitlines()
-            reader = csv.reader(csvfile)
-
-            inseridos = 0
-            ignorados = []
-
-            for linha in reader:
-                if len(linha) < 7:
-                    continue
-                driverref, number, code, forename, surname, dob, nationality = linha[:7]
-                number = number if number.strip() else None
-                code = code if code.strip() else None
-                dob = dob.strip()
-
-                # Verifica se nome e sobrenome já existem
-                existe = db.execute(
-                    "SELECT 1 FROM drivers WHERE forename = ? AND surname = ?",
-                    (forename, surname),
-                ).fetchone()
-
-                if existe:
-                    ignorados.append(f"{forename} {surname}")
-                    continue
-
-                try:
-                    db.execute(
-                        """
-                        INSERT INTO drivers (driverref, number, code, forename, surname, dob, nationality)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (driverref, number, code, forename, surname, dob, nationality),
-                    )
-
-                    db.execute(
-                        """
-                        INSERT INTO users (login, password, tipo, idoriginal)
-                        VALUES (?, ?, ?, ?)
-                        """,
-                        (f"{driverref}_d", driverref, "Piloto", driverref),
-                    )
-
-                    db.commit()
-                    inseridos += 1
-                except sqlite3.IntegrityError:
-                    ignorados.append(f"{forename} {surname}")
-
-            msg = f"{inseridos} pilotos inseridos com sucesso."
-            if ignorados:
-                msg += " Já existentes: " + ", ".join(ignorados)
-
-    return render_template("upload_pilotos.html", msg=msg)
-
-
-# Relatório 4: pilotos da escuderia com contagem de vitórias
-@app.route("/escuderia/relatorio4")
-def escuderia_relatorio4():
-    if "user" not in session or session["user"]["tipo"] != "Escuderia":
-        return redirect("/")
-    escuderia = session["user"]["idoriginal"]
-    db = get_db()
-
-    # SQL para contar vitórias (posição = 1)
-    pilotos = db.execute(
-        """
-        SELECT d.forename || ' ' || d.surname AS piloto,
-               COUNT(*) AS vitorias
-        FROM results r
-        JOIN drivers d ON r.driverid = d.driverid
-        JOIN constructors c ON r.constructorid = c.constructorid
-        WHERE c.constructorref = ?
-          AND r.position = 1
-        GROUP BY d.driverid
-        ORDER BY vitorias DESC
-    """,
-        (escuderia,),
-    ).fetchall()
-
-    return render_template("relatorio4.html", pilotos=pilotos)
-
-
-# Relatório 5: resultados por status na escuderia
-@app.route("/escuderia/relatorio5")
-def escuderia_relatorio5():
-    if "user" not in session or session["user"]["tipo"] != "Escuderia":
-        return redirect("/")
-    escuderia = session["user"]["idoriginal"]
-    db = get_db()
-
-    resultados = db.execute(
-        """
-        SELECT s.status_name, COUNT(*) AS total
-        FROM results r
-        JOIN status s ON r.statusid = s.statusid
-        JOIN constructors c ON r.constructorid = c.constructorid
-        WHERE c.constructorref = ?
-        GROUP BY s.status_name
-        ORDER BY total DESC
-    """,
-        (escuderia,),
-    ).fetchall()
-
-    return render_template("relatorio5.html", resultados=resultados)
-
+            try:
+                with db.cursor(cursor_factory=RealDictCursor) as cur:
+                    csvfile = file.stream.read().decode("utf-8")
+                    csv_reader = csv.reader(StringIO(csvfile))
+                    inseridos = 0
+                    ignorados = []
+                    
+                    for linha in csv_reader:
+                        if len(linha) < 7:
+                            print(f"Linha inválida: {linha}")
+                            continue
+                        
+                        driver_ref, number, code, forename, surname, dob, nationality = linha[:7]
+                        number = number.strip() if number.strip() else None
+                        code = code.strip() if code.strip() else None
+                        dob = dob.strip()
+                        
+                        # Verifica se o piloto já existe
+                        cur.execute(
+                            """
+                            SELECT 1 FROM Driver 
+                            WHERE Forename = %s AND Surname = %s
+                            """,
+                            (forename, surname),
+                        )
+                        existe = cur.fetchone()
+                        
+                        if existe:
+                            ignorados.append(f"{forename} {surname}")
+                            print(f"Piloto ignorado: {forename} {surname}")
+                            continue
+                        
+                        try:
+                            # Insere na tabela Driver
+                            cur.execute(
+                                """
+                                INSERT INTO Driver (DriverRef, Number, Code, Forename, Surname, Dob, Nationality)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                RETURNING DriverId
+                                """,
+                                (driver_ref, number, code, forename, surname, dob, nationality),
+                            )
+                            driver_id = cur.fetchone()['DriverId']
+                            print(f"Piloto inserido: {forename} {surname}, DriverId: {driver_id}")
+                            
+                            # Insere na tabela Users com senha criptografada
+                            cur.execute(
+                                """
+                                INSERT INTO Users (login, password, tipo, idoriginal)
+                                VALUES (%s, crypt(%s, gen_salt('bf')), %s, %s)
+                                """,
+                                (f"{driver_ref}_d", driver_ref, "Piloto", driver_id),
+                            )
+                            db.commit()
+                            inseridos += 1
+                        except Exception as e:
+                            db.rollback()
+                            ignorados.append(f"{forename} {surname}")
+                            print(f"Erro ao inserir {forename} {surname}: {e}")
+                    
+                    msg = f"{inseridos} pilotos inseridos com sucesso."
+                    if ignorados:
+                        msg += " Já existentes: " + ", ".join(ignorados)
+                    print(f"Mensagem final: {msg}")
+            except Exception as e:
+                msg = f"Erro ao processar o arquivo: {e}"
+                print(f"Erro geral: {e}")
+            finally:
+                close_db()
+    
+    return render_template("upload_pilotos.html", user=user, msg=msg)
 
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)
