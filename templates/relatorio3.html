@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Relatório 3 - Corridas e Circuitos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      margin: 0;
+      background: #f0f2f5;
+      color: #2c3e50;
+      line-height: 1.5;
+      font-size: 14px; /* fonte base menor */
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 40px auto 60px;
+      background: #ffffff;
+      padding: 25px 30px; /* padding um pouco menor */
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-weight: 700;
+      font-size: 1.8rem; /* menor que antes */
+      color: #34495e;
+      margin-bottom: 25px;
+      border-bottom: 3px solid #2980b9;
+      padding-bottom: 6px;
+    }
+
+    h2 {
+      font-weight: 600;
+      color: #2980b9;
+      margin-top: 35px;
+      margin-bottom: 18px;
+      border-bottom: 2px solid #d6e9fb;
+      padding-bottom: 5px;
+      font-size: 1.3rem;
+    }
+
+    h3 {
+      font-weight: 600;
+      color: #3498db;
+      margin-top: 25px;
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+    }
+
+    p strong {
+      font-size: 1.1rem;
+      color: #2c3e50;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 6px; /* menos espaçamento vertical */
+      margin-bottom: 35px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: #2980b9;
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 8px 8px 0 0;
+    }
+
+    thead th {
+      padding: 10px 16px; /* padding reduzido */
+    }
+
+    tbody tr {
+      background: #f9fbfd;
+      transition: background-color 0.3s ease;
+      cursor: default;
+      border-radius: 8px;
+    }
+
+    tbody tr:hover {
+      background: #e8f0fe;
+    }
+
+    tbody td {
+      padding: 10px 16px;
+      color: #34495e;
+    }
+
+    tbody td:first-child {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    /* Responsividade básica */
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px 20px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.1rem;
+      }
+
+      h3 {
+        font-size: 1rem;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead tr {
+        display: none;
+      }
+
+      tbody tr {
+        margin-bottom: 18px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 10px;
+        padding: 12px;
+      }
+
+      tbody td {
+        padding-left: 48%;
+        position: relative;
+        text-align: right;
+        font-size: 13px;
+      }
+
+      tbody td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        padding-left: 10px;
+        font-weight: 600;
+        text-align: left;
+        color: #2980b9;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Relatório 3 - Corridas e Circuitos</h1>
+
+    <h2>1. Total de corridas cadastradas</h2>
+    <p><strong>{{ total_corridas }}</strong></p>
+
+    <h2>2. Quantidade de corridas por circuito e estatísticas de voltas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Circuito</th>
+          <th>Qtd. Corridas</th>
+          <th>Voltas Mínimas</th>
+          <th>Voltas Média</th>
+          <th>Voltas Máximas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in corridas_por_circuito %}
+        <tr>
+          <td data-label="Circuito">{{ row.circuito_nome }}</td>
+          <td data-label="Qtd. Corridas">{{ row.qtd_corridas }}</td>
+          <td data-label="Voltas Mínimas">{{ row.min_voltas }}</td>
+          <td data-label="Voltas Média">{{ "%.2f"|format(row.media_voltas) }}</td>
+          <td data-label="Voltas Máximas">{{ row.max_voltas }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>3. Detalhes das corridas por circuito</h2>
+
+    {% for cid, circuito in detalhes_por_circuito.items() %}
+      <h3>{{ circuito.nome }}</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome da Corrida</th>
+            <th>Voltas</th>
+            <th>Tempo Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for corrida in circuito.corridas %}
+          <tr>
+            <td data-label="Nome da Corrida">{{ corrida.corrida_nome }}</td>
+            <td data-label="Voltas">{{ corrida.laps }}</td>
+            <td data-label="Tempo Total">{{ corrida.time if corrida.time else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  </div>
+</body>
+</html>

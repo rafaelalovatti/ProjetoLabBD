@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastrar Piloto</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .form-box {
+      background-color: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    p {
+      color: #555;
+      margin-top: 10px;
+    }
+    a {
+      display: inline-block;
+      margin-top: 15px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-box">
+    <h2>Cadastrar Piloto</h2>
+    <form method="post">
+      <input name="driverref" placeholder="Driverref" required>
+      <input name="number" placeholder="Número">
+      <input name="code" placeholder="Código">
+      <input name="forename" placeholder="Nome" required>
+      <input name="surname" placeholder="Sobrenome" required>
+      <input name="dob" type="date" placeholder="Data de Nascimento" required>
+      <input name="nationality" placeholder="Nacionalidade" required>
+      <button type="submit">Cadastrar</button>
+    </form>
+    <p>{{ msg }}</p>
+    <a href="/dashboard">Voltar ao dashboard</a>
+  </div>
+</body>
+</html>

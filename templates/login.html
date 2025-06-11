@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - F1</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #2c3e50, #3498db);
+    }
+    .container {
+      display: flex;
+      width: 100%;
+      max-width: 1000px;
+      margin: auto;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .image-side {
+      flex: 1;
+      background-image: url('https://lncimg.lance.com.br/cdn-cgi/image/width=950,quality=75,fit=pad,format=webp/uploads/2025/05/AFP__20250531__48QK792__v1__HighRes__AutoPrixF1EspQualifying-scaled-aspect-ratio-512-320.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(0,0,0,0.2);
+    }
+    .form-side {
+      flex: 1;
+      background-color: white;
+      padding: 50px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: #333;
+    }
+    h2 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    input {
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .error {
+      color: red;
+      margin-top: 15px;
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .image-side {
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="image-side">
+      <!-- Imagem carregada da internet -->
+    </div>
+    <div class="form-side">
+      <h2>Login - F1</h2>
+      <form method="post">
+        <input type="text" name="login" placeholder="Login" required>
+        <input type="password" name="password" placeholder="Senha" required>
+        <button type="submit">Entrar</button>
+      </form>
+      {% if error %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

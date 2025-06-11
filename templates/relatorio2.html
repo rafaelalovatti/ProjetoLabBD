@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Relatório 2 - Aeroportos Próximos por Cidade</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    form {
+      max-width: 400px;
+      margin: 0 auto 30px auto;
+      display: flex;
+      gap: 10px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #3498db;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      width: 90%;
+      max-width: 900px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    .no-results {
+      text-align: center;
+      font-style: italic;
+      margin-top: 20px;
+      color: #666;
+    }
+    a {
+      display: block;
+      text-align: center;
+      margin-top: 30px;
+      text-decoration: none;
+      color: #3498db;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Relatório 2: Aeroportos Próximos por Cidade</h1>
+
+  <form method="post" action="/relatorio2">
+    <input type="text" name="cidade" placeholder="Digite o nome da cidade" required value="{{ cidade or '' }}">
+    <button type="submit">Pesquisar</button>
+  </form>
+
+  {% if resultados is defined %}
+    {% if resultados %}
+      <table>
+        <thead>
+          <tr>
+            <th>Nome da Cidade</th>
+            <th>Código IATA</th>
+            <th>Nome do Aeroporto</th>
+            <th>Cidade do Aeroporto</th>
+            <th>Distância (Km)</th>
+            <th>Tipo do Aeroporto</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in resultados %}
+            <tr>
+              <td>{{ r.nome_cidade }}</td>
+              <td>{{ r.iata_code }}</td>
+              <td>{{ r.airport_name }}</td>
+              <td>{{ r.airport_city }}</td>
+              <td>{{ "%.2f"|format(r.distancia) }}</td>
+              <td>{{ r.airport_type }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="no-results">Nenhum aeroporto encontrado para essa cidade dentro de 100 Km e dos tipos ‘medium airport’ ou ‘large airport’.</p>
+    {% endif %}
+  {% endif %}
+
+  <a href="/relatorios">Voltar aos relatórios</a>
+</body>
+</html>

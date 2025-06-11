@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Relatórios</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+    }
+    h2 {
+      color: #333;
+      margin-top: 0;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      text-align: left;
+      margin: 20px 0;
+    }
+    li {
+      background-color: #f0f2f5;
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 6px;
+      color: #555;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    li:hover {
+      background-color: #dbe6fd;
+    }
+    li a {
+      color: #007bff;
+      text-decoration: none;
+      display: block;
+      width: 100%;
+    }
+    li a:hover {
+      text-decoration: underline;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      text-decoration: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+      transition: background-color 0.3s;
+    }
+    a.back-link:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Relatórios disponíveis</h2>
+    <ul>
+      <li><a href="/relatorio1">Relatório 1: Resultados por status</a></li>
+      <li><a href="/relatorio2">Relatório 2: Corridas e pontuação</a></li>
+      <li><a href="/relatorio3">Relatório 3: Participações de pilotos</a></li>
+    </ul>
+    <a class="back-link" href="/dashboard">Voltar ao Dashboard</a>
+  </div>
+</body>
+</html>

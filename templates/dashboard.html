@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    p {
+      color: #555;
+    }
+    a {
+      display: inline-block;
+      margin: 8px 4px;
+      padding: 10px 20px;
+      text-decoration: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+      transition: background-color 0.3s;
+    }
+    a:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Bem-vindo, {{ user['login'] }}</h2>
+    <p>{{ extra }}</p>
+    {% for k, v in resumo.items() %}
+      <p><strong>{{ k }}:</strong> {{ v }}</p>
+    {% endfor %}
+    {% if user['tipo'] == 'Administrador' %}
+      <a href="/cadastrar_escuderia">Cadastrar Escuderia</a>
+      <a href="/cadastrar_piloto">Cadastrar Piloto</a>
+    {% endif %}
+    <a href="/relatorios">Ir para Relatórios</a>
+  </div>
+</body>
+</html>
