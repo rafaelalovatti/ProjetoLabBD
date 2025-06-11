@@ -56,3 +56,54 @@ BEGIN
         ResultCount DESC, s.Status;
 END;
 $$ LANGUAGE plpgsql STABLE;
+
+
+CREATE OR REPLACE FUNCTION Public.ReportConstructorWins(p_ConstructorId INTEGER)
+RETURNS BIGINT AS $$
+DECLARE
+    win_count BIGINT;
+BEGIN
+    SELECT COUNT(*) INTO win_count
+    FROM Results r
+    WHERE r.ConstructorId = p_ConstructorId
+      AND r.Position = 1;
+
+    RETURN win_count;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+
+
+CREATE OR REPLACE FUNCTION Public.ReportDistinctDrivers(p_ConstructorId INTEGER)
+RETURNS BIGINT AS $$
+DECLARE
+    driver_count BIGINT;
+BEGIN
+    SELECT COUNT(DISTINCT r.DriverId)
+    INTO driver_count
+    FROM Results r
+    WHERE r.ConstructorId = p_ConstructorId;
+
+    RETURN driver_count;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+
+CREATE OR REPLACE FUNCTION Public.ReportConstructorYears(p_ConstructorId INTEGER)
+RETURNS TABLE (
+    FirstYear INTEGER,
+    LastYear INTEGER
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        MIN(ra.Year) AS FirstYear,
+        MAX(ra.Year) AS LastYear
+    FROM 
+        Results r
+        JOIN Races ra ON r.RaceId = ra.RaceId
+    WHERE 
+        r.ConstructorId = p_ConstructorId;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
