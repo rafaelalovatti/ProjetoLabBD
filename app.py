@@ -341,59 +341,6 @@ def escuderia_consultar_piloto():
 
     return render_template("consultar_piloto.html", resultados=resultados)
 
-
-@app.route("/escuderia/inserir_piloto", methods=["GET", "POST"])
-def inserir_piloto():
-    if "user" not in session or session["user"]["tipo"] != "Escuderia":
-        return redirect("/")
-
-    mensagem = ""
-    if request.method == "POST":
-        arquivo = request.files.get("arquivo")
-        if arquivo:
-            linhas = arquivo.read().decode("utf-8").splitlines()
-            db = get_db()
-            inseridos, existentes = 0, 0
-
-            for linha in linhas:
-                dados = linha.strip().split(",")
-                if len(dados) < 7:
-                    continue
-                driverref, number, code, forename, surname, dob, nationality = dados[:7]
-                # Verifica duplicidade
-                existe = db.execute(
-                    """
-                    SELECT 1 FROM drivers WHERE forename = ? AND surname = ?
-                """,
-                    (forename, surname),
-                ).fetchone()
-                if existe:
-                    existentes += 1
-                    continue
-                # Insere piloto
-                db.execute(
-                    """
-                    INSERT INTO drivers (driverref, number, code, forename, surname, dob, nationality)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                    (
-                        driverref,
-                        number or None,
-                        code or None,
-                        forename,
-                        surname,
-                        dob,
-                        nationality,
-                    ),
-                )
-                db.commit()
-                inseridos += 1
-
-            mensagem = f"{inseridos} piloto(s) inserido(s). {existentes} já existiam."
-
-    return render_template("inserir_piloto.html", mensagem=mensagem)
-
-
 @app.route("/escuderia/upload_pilotos", methods=["GET", "POST"])
 def escuderia_upload_pilotos():
     if "user" not in session or session["user"]["tipo"] != "Escuderia":
