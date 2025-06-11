@@ -65,14 +65,27 @@ def dashboard():
                 cur.execute("SELECT COUNT(*) FROM USERS")
                 resumo = {"Total de usuários": cur.fetchone()[0]}
             elif tipo == "Escuderia":
-                escuderia = user["idoriginal"]
+                escuderia_id = user["idoriginal"]
                 cur.execute(
-                    "SELECT COUNT(*) FROM USERS WHERE tipo = 'Piloto' AND idoriginal = %s",
-                    (escuderia,),
+                    """
+                    SELECT c.Name
+                    FROM Constructors c
+                    WHERE c.ConstructorId = %s
+                    """,
+                    (escuderia_id,),
                 )
-                count = cur.fetchone()[0]
-                extra_info = f"Escuderia: {escuderia}"
-                resumo = {"Pilotos vinculados": count}
+                escuderia_nome = cur.fetchone()
+                cur.execute(
+                    """
+                    SELECT COUNT(DISTINCT r.DriverId)
+                    FROM Results r
+                    WHERE r.ConstructorId = %s
+                    """,
+                    (escuderia_id,),
+                )
+                count_pilotos = cur.fetchone()[0]
+                extra_info = f"Escuderia: {escuderia_nome[0] if escuderia_nome else escuderia_id}"
+                resumo = {"Pilotos vinculados": count_pilotos}
             elif tipo == "Piloto":
                 piloto = user["idoriginal"]
                 cur.execute(
@@ -88,6 +101,12 @@ def dashboard():
     finally:
         close_db()
     return render_template("dashboard.html", user=user, extra=extra_info, resumo=resumo)
+
+
+
+
+
+
 
 @app.route("/cadastrar_piloto", methods=["GET", "POST"])
 def cadastrar_piloto():
