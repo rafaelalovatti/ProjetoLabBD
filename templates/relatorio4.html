@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório 4 – Vitórias por Piloto</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Relatório 4 – Vitórias dos Pilotos</h2>
+    {% if pilotos %}
+      <table>
+        <thead>
+          <tr><th>Piloto</th><th>Vitórias</th></tr>
+        </thead>
+        <tbody>
+          {% for p in pilotos %}
+            <tr><td>{{ p.piloto }}</td><td>{{ p.vitorias }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Sem vitórias registradas para sua escuderia.</p>
+    {% endif %}
+    <a href="/dashboard">Voltar</a>
+  </div>
+</body>
+</html>

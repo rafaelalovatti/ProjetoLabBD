@@ -72,11 +72,26 @@
 <body>
   <div class="container">
     <h2>Relatórios disponíveis</h2>
-    <ul>
-      <li><a href="/relatorio1">Relatório 1: Resultados por status</a></li>
-      <li><a href="/relatorio2">Relatório 2: Corridas e pontuação</a></li>
-      <li><a href="/relatorio3">Relatório 3: Participações de pilotos</a></li>
-    </ul>
+
+    {% if user['tipo'] == 'Administrador' %}
+      <ul>
+        <li><a href="/admin/relatorio1">Relatório 1: Resultados por status</a></li>
+        <li><a href="/admin/relatorio2">Relatório 2: Corridas e pontuação</a></li>
+        <li><a href="/admin/relatorio3">Relatório 3: Participações de pilotos</a></li>
+      </ul>
+
+    {% elif user['tipo'] == 'Escuderia' %}
+      <ul>
+        <li><a href="/escuderia/relatorio4">Relatório 4: Pilotos da escuderia e vitórias</a></li>
+        <li><a href="/escuderia/relatorio5">Relatório 5: Quantidade de resultados por status</a></li>
+      </ul>
+
+    {% elif user['tipo'] == 'Piloto' %}
+      <p>Você pode apenas visualizar seus dados e relatórios, sem acesso a relatórios detalhados.</p>
+    {% else %}
+      <p>Tipo de usuário desconhecido.</p>
+    {% endif %}
+
     <a class="back-link" href="/dashboard">Voltar ao Dashboard</a>
   </div>
 </body>
