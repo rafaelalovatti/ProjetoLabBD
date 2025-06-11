@@ -52,10 +52,17 @@
     {% for k, v in resumo.items() %}
       <p><strong>{{ k }}:</strong> {{ v }}</p>
     {% endfor %}
+
     {% if user['tipo'] == 'Administrador' %}
-      <a href="/cadastrar_escuderia">Cadastrar Escuderia</a>
-      <a href="/cadastrar_piloto">Cadastrar Piloto</a>
+      <a href="admin/cadastrar_escuderia">Cadastrar Escuderia</a>
+      <a href="admin/cadastrar_piloto">Cadastrar Piloto</a>
+    {% elif user['tipo'] == 'Escuderia' %}
+      <a href="/escuderia/consultar_piloto">Consultar Pilotos por Forename</a>
+      <a href="/escuderia/upload_pilotos">Inserir Pilotos por Arquivo</a>
+    {% elif user['tipo'] == 'Piloto' %}
+      <p>Você pode apenas visualizar seus dados e relatórios.</p>
     {% endif %}
+
     <a href="/relatorios">Ir para Relatórios</a>
   </div>
 </body>

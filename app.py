@@ -103,11 +103,6 @@ def dashboard():
     return render_template("dashboard.html", user=user, extra=extra_info, resumo=resumo)
 
 
-
-
-
-
-
 @app.route("/cadastrar_piloto", methods=["GET", "POST"])
 def cadastrar_piloto():
     if "user" not in session or session["user"]["tipo"] != "Administrador":
@@ -215,9 +210,13 @@ def cadastrar_escuderia():
 
 @app.route("/relatorios")
 def relatorios():
-    if "user" not in session or session["user"]["tipo"] != "Administrador":
-        return redirect("/")
-    return render_template("relatorios.html")
+    if "user" not in session:
+        return redirect("/")  # usuário não logado, redireciona para home/login
+
+    user = session["user"]
+    # qualquer tipo de usuário pode acessar relatorios, mas no HTML mostra condicionalmente
+
+    return render_template("relatorios.html", user=user)
 
 @app.route("/relatorio1")
 def relatorio1():
@@ -322,6 +321,191 @@ def relatorio3():
         voltas=voltas_por_circuito,
         detalhes_por_circuito=detalhes_por_circuito,
     )
+
+# ----------------------------------ESCUDERIA ---------------------
+@app.route("/escuderia/consultar_piloto", methods=["GET", "POST"])
+def escuderia_consultar_piloto():
+    if "user" not in session or session["user"]["tipo"] != "Escuderia":
+        return redirect("/")
+    
+    user = session["user"]
+    db = get_db()
+    resultados = []
+    try:
+        with db.cursor() as cur:
+            if request.method == "POST":
+                forename = request.form.get("forename")
+                escuderia_id = user["idoriginal"]
+                if forename:
+                    cur.execute(
+                        """
+                        SELECT 
+                            d.Forename || ' ' || d.Surname AS Nome_Completo, 
+                            d.Dob, 
+                            d.Nationality
+                        FROM Results r
+                        JOIN Driver d ON r.DriverId = d.DriverId
+                        WHERE r.ConstructorId = %s AND LOWER(d.Forename) = LOWER(%s)
+                        GROUP BY d.DriverId, d.Forename, d.Surname, d.Dob, d.Nationality
+                        ORDER BY Nome_Completo
+                        """,
+                        (escuderia_id, forename),
+                    )
+                    resultados = cur.fetchall()
+                else:
+                    print("forename vazio ou não fornecido")
+    finally:
+        close_db()
+    
+    return render_template("consultar_piloto.html", user=user, resultados=resultados)
+
+@app.route("/escuderia/relatorio4")
+def escuderia_relatorio4():
+    if "user" not in session or session["user"]["tipo"] != "Escuderia":
+        return redirect("/")
+    
+    user = session["user"]
+    escuderia_id = user["idoriginal"]
+    db = get_db()
+    pilotos = []
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT FullName AS piloto, Wins AS vitorias
+                FROM Public.ReportDriverWinsByConstructor(%s)
+                """,
+                (escuderia_id,),
+            )
+            pilotos = cur.fetchall()
+    finally:
+        close_db()
+    
+    return render_template("relatorio4.html", user=user, pilotos=pilotos)
+
+from psycopg2.extras import RealDictCursor
+
+@app.route("/escuderia/relatorio5")
+def escuderia_relatorio5():
+    if "user" not in session or session["user"]["tipo"] != "Escuderia":
+        print(f"Redirecionando: sessão inválida - {session.get('user')}")
+        return redirect("/")
+    
+    user = session["user"]
+    escuderia_id = user["idoriginal"]
+    print(f"Escuderia ID: {escuderia_id}")
+    db = get_db()
+    resultados = []
+    try:
+        with db.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT Status AS status_name, ResultCount AS total
+                FROM Public.ReportResultsByStatus(%s)
+                """,
+                (escuderia_id,),
+            )
+            resultados = cur.fetchall()
+            print(f"Resultados: {resultados}")
+    except Exception as e:
+        print(f"Erro na consulta: {e}")
+    finally:
+        close_db()
+    
+    return render_template("relatorio5.html", user=user, resultados=resultados)
+
+from psycopg2.extras import RealDictCursor
+import csv
+from io import StringIO
+
+@app.route("/escuderia/upload_pilotos", methods=["GET", "POST"])
+def escuderia_upload_pilotos():
+    if "user" not in session or session["user"]["tipo"] != "Escuderia":
+        print(f"Redirecionando: sessão inválida - {session.get('user')}")
+        return redirect("/")
+    
+    user = session["user"]
+    escuderia_id = user["idoriginal"]
+    print(f"Escuderia ID: {escuderia_id}")
+    msg = ""
+    
+    if request.method == "POST":
+        file = request.files.get("arquivo")
+        if not file:
+            msg = "Nenhum arquivo enviado."
+        else:
+            db = get_db()
+            try:
+                with db.cursor(cursor_factory=RealDictCursor) as cur:
+                    csvfile = file.stream.read().decode("utf-8")
+                    csv_reader = csv.reader(StringIO(csvfile))
+                    inseridos = 0
+                    ignorados = []
+                    
+                    for linha in csv_reader:
+                        if len(linha) < 7:
+                            print(f"Linha inválida: {linha}")
+                            continue
+                        
+                        driver_ref, number, code, forename, surname, dob, nationality = linha[:7]
+                        number = number.strip() if number.strip() else None
+                        code = code.strip() if code.strip() else None
+                        dob = dob.strip()
+                        
+                        # Verifica se o piloto já existe
+                        cur.execute(
+                            """
+                            SELECT 1 FROM Driver 
+                            WHERE Forename = %s AND Surname = %s
+                            """,
+                            (forename, surname),
+                        )
+                        existe = cur.fetchone()
+                        
+                        if existe:
+                            ignorados.append(f"{forename} {surname}")
+                            print(f"Piloto ignorado: {forename} {surname}")
+                            continue
+                        
+                        try:
+                            # Insere na tabela Driver
+                            cur.execute(
+                                """
+                                INSERT INTO Driver (DriverRef, Number, Code, Forename, Surname, Dob, Nationality)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                RETURNING DriverId
+                                """,
+                                (driver_ref, number, code, forename, surname, dob, nationality),
+                            )
+                            driver_id = cur.fetchone()['DriverId']
+                            print(f"Piloto inserido: {forename} {surname}, DriverId: {driver_id}")
+                            
+                            # Insere na tabela Users com senha criptografada
+                            cur.execute(
+                                """
+                                INSERT INTO Users (login, password, tipo, idoriginal)
+                                VALUES (%s, crypt(%s, gen_salt('bf')), %s, %s)
+                                """,
+                                (f"{driver_ref}_d", driver_ref, "Piloto", driver_id),
+                            )
+                            db.commit()
+                            inseridos += 1
+                        except Exception as e:
+                            db.rollback()
+                            ignorados.append(f"{forename} {surname}")
+                            print(f"Erro ao inserir {forename} {surname}: {e}")
+                    
+                    msg = f"{inseridos} pilotos inseridos com sucesso."
+                    if ignorados:
+                        msg += " Já existentes: " + ", ".join(ignorados)
+                    print(f"Mensagem final: {msg}")
+            except Exception as e:
+                msg = f"Erro ao processar o arquivo: {e}"
+                print(f"Erro geral: {e}")
+            finally:
+                close_db()
+    
+    return render_template("upload_pilotos.html", user=user, msg=msg)
 
 if __name__ == "__main__":
     app.run(debug=True)
