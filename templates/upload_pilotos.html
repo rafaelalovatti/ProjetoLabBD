@@ -23,6 +23,7 @@
       text-align: center;
       max-width: 500px;
       width: 100%;
+      box-sizing: border-box;
     }
     h2 {
       margin-bottom: 30px;
@@ -78,7 +79,7 @@
       user-select: none;
       width: 100%;
       max-width: 220px;
-      margin: 0 auto;
+      margin: 0 auto 20px;
       display: block;
     }
     button:hover,
@@ -94,6 +95,34 @@
     .erro {
       color: #d32f2f;
       font-weight: 600;
+    }
+    a.voltar-dashboard {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 15px;
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      gap: 8px;
+      transition: color 0.3s ease;
+      user-select: none;
+      justify-content: center;
+    }
+    a.voltar-dashboard:hover, a.voltar-dashboard:focus {
+      color: #0056b3;
+      text-decoration: underline;
+      outline: none;
+    }
+    a.voltar-dashboard svg {
+      width: 18px;
+      height: 18px;
+      fill: #007bff;
+      flex-shrink: 0;
+      transition: fill 0.3s ease;
+    }
+    a.voltar-dashboard:hover svg, a.voltar-dashboard:focus svg {
+      fill: #0056b3;
     }
   </style>
 </head>
@@ -111,6 +140,12 @@
     {% if msg %}
       <p class="{{ 'erro' if 'Erro' in msg else '' }}">{{ msg }}</p>
     {% endif %}
+    <a href="/dashboard" class="voltar-dashboard" title="Voltar ao dashboard">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" >
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Voltar ao dashboard
+    </a>
   </div>
 
   <script>
