@@ -1,100 +1,155 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Login - F1</title>
+  <meta charset="UTF-8" />
+  <title>Login - Portal Fórmula 1</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     * {
       box-sizing: border-box;
-    }
-    body {
       margin: 0;
-      height: 100vh;
+      padding: 0;
+    }
+    html, body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f111a, #1c1f26);
       display: flex;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #2c3e50, #3498db);
+      align-items: center;
+      justify-content: center;
+      color: #fff;
     }
     .container {
       display: flex;
       width: 100%;
-      max-width: 1000px;
-      margin: auto;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
-      border-radius: 12px;
+      max-width: 1200px;
+      height: 600px;
+      border-radius: 20px;
       overflow: hidden;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.5);
     }
     .image-side {
-      flex: 1;
-      background-image: url('https://lncimg.lance.com.br/cdn-cgi/image/width=950,quality=75,fit=pad,format=webp/uploads/2025/05/AFP__20250531__48QK792__v1__HighRes__AutoPrixF1EspQualifying-scaled-aspect-ratio-512-320.jpg');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      background-color: rgba(0,0,0,0.2);
+      flex: 1.2;
+      background: url('https://lncimg.lance.com.br/cdn-cgi/image/width=950,quality=75,fit=pad,format=webp/uploads/2025/05/AFP__20250531__48QK792__v1__HighRes__AutoPrixF1EspQualifying-scaled-aspect-ratio-512-320.jpg') center/cover no-repeat;
+      position: relative;
+    }
+    .image-side::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
     }
     .form-side {
       flex: 1;
-      background-color: white;
-      padding: 50px 40px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      padding: 50px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      color: #333;
     }
-    h2 {
-      margin-bottom: 20px;
-      text-align: center;
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    }
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 400;
+      margin-bottom: 30px;
+      color: #ccc;
     }
     form {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
     }
-    input {
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
+    .input-group {
+      position: relative;
+      flex: 1 1 200px;
+    }
+    .input-group i {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      transform: translateY(-50%);
+      color: #aaa;
+      font-size: 1rem;
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+    .input-group input:focus + i,
+    .input-group input:focus ~ i {
+      transform: translateY(-50%) translateX(5px);
+      color: #4dabf7;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 12px 16px 12px 40px;
+      border: none;
+      border-radius: 10px;
+      background-color: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+    }
+    .input-group input::placeholder {
+      color: #bbb;
+    }
+    .input-group input:focus {
+      background-color: rgba(255,255,255,0.15);
+      outline: none;
+      box-shadow: 0 0 0 2px #007bff;
     }
     button {
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 6px;
+      padding: 12px 20px;
       border: none;
-      background-color: #007bff;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0052cc, #007bff);
       color: white;
-      font-weight: bold;
-      font-size: 15px;
+      font-size: 1rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,123,255,0.3);
     }
     button:hover {
-      background-color: #0056b3;
+      background: linear-gradient(135deg, #003d99, #0056b3);
     }
     .error {
-      color: red;
-      margin-top: 15px;
-      text-align: center;
+      color: #ff6b6b;
+      margin-top: 20px;
+      font-weight: 600;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
       .container {
         flex-direction: column;
+        height: auto;
       }
-      .image-side {
-        height: 200px;
+      form {
+        flex-direction: column;
+        align-items: stretch;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="image-side">
-      <!-- Imagem carregada da internet -->
-    </div>
+    <div class="image-side" aria-hidden="true"></div>
     <div class="form-side">
-      <h2>Login - F1</h2>
+      <h1>Portal Fórmula 1</h1>
+      <h3>Faça seu login</h3>
       <form method="post">
-        <input type="text" name="login" placeholder="Login" required>
-        <input type="password" name="password" placeholder="Senha" required>
+        <div class="input-group">
+          <input type="text" name="login" placeholder="Login" required autocomplete="username" />
+          <i class="fa fa-user"></i>
+        </div>
+        <div class="input-group">
+          <input type="password" name="password" placeholder="Senha" required autocomplete="current-password" />
+          <i class="fa fa-lock"></i>
+        </div>
         <button type="submit">Entrar</button>
       </form>
       {% if error %}

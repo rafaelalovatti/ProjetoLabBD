@@ -22,6 +22,7 @@
       text-align: center;
       max-width: 500px;
       width: 100%;
+      box-sizing: border-box;
     }
     h2 {
       color: #333;
@@ -54,18 +55,42 @@
     li a:hover {
       text-decoration: underline;
     }
+
+    /* Novo estilo do botão voltar (igual ao outro exemplo) */
     a.back-link {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       margin-top: 20px;
-      padding: 10px 20px;
+      color: #007bff;
       text-decoration: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 6px;
-      transition: background-color 0.3s;
+      font-weight: 600;
+      font-size: 16px;
+      gap: 8px;
+      transition: color 0.3s ease;
+      user-select: none;
+      justify-content: center;
+      cursor: pointer;
     }
-    a.back-link:hover {
-      background-color: #0056b3;
+    a.back-link:hover, a.back-link:focus {
+      color: #0056b3;
+      text-decoration: underline;
+      outline: none;
+    }
+    a.back-link svg {
+      width: 18px;
+      height: 18px;
+      fill: #007bff;
+      flex-shrink: 0;
+      transition: fill 0.3s ease;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    a.back-link:hover svg, a.back-link:focus svg {
+      fill: none;
+      stroke: #0056b3;
     }
   </style>
 </head>
@@ -87,12 +112,21 @@
       </ul>
 
     {% elif user['tipo'] == 'Piloto' %}
-      <p>Você pode apenas visualizar seus dados e relatórios, sem acesso a relatórios detalhados.</p>
+      <ul>
+        <li><a href="/piloto/relatorio6">Relatório 6: Pontos por ano e corrida</a></li>
+        <li><a href="/piloto/relatorio7">Relatório 7: Resultados por status</a></li>
+      </ul>
+
     {% else %}
       <p>Tipo de usuário desconhecido.</p>
     {% endif %}
 
-    <a class="back-link" href="/dashboard">Voltar ao Dashboard</a>
+    <a href="/dashboard" class="back-link" title="Voltar ao dashboard">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      Voltar ao dashboard
+    </a>
   </div>
 </body>
 </html>

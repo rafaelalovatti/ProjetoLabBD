@@ -57,49 +57,179 @@ def dashboard():
         return redirect("/")
     user = session["user"]
     db = get_db()
-    try:
-        with db.cursor() as cur:
-            tipo = user["tipo"]
-            if tipo == "Administrador":
-                extra_info = "Administrador - acesso total"
-                cur.execute("SELECT COUNT(*) FROM USERS")
-                resumo = {"Total de usuários": cur.fetchone()[0]}
-            elif tipo == "Escuderia":
-                escuderia_id = user["idoriginal"]
-                cur.execute(
-                    """
-                    SELECT c.Name
-                    FROM Constructors c
-                    WHERE c.ConstructorId = %s
-                    """,
-                    (escuderia_id,),
-                )
-                escuderia_nome = cur.fetchone()
-                cur.execute(
-                    """
-                    SELECT COUNT(DISTINCT r.DriverId)
-                    FROM Results r
-                    WHERE r.ConstructorId = %s
-                    """,
-                    (escuderia_id,),
-                )
-                count_pilotos = cur.fetchone()[0]
-                extra_info = f"Escuderia: {escuderia_nome[0] if escuderia_nome else escuderia_id}"
-                resumo = {"Pilotos vinculados": count_pilotos}
-            elif tipo == "Piloto":
-                piloto = user["idoriginal"]
-                cur.execute(
-                    "SELECT Forename || ' ' || Surname FROM Driver WHERE DriverId = %s",
-                    (piloto,),
-                )
-                full_name = cur.fetchone()
-                extra_info = f"Piloto: {full_name[0] if full_name else piloto}"
-                resumo = {}
-            else:
-                extra_info = "Tipo desconhecido"
-                resumo = {}
-    finally:
-        close_db()
+    tipo = user["tipo"]
+
+    if tipo == "Administrador":
+        extra_info = "Administrador - acesso total"
+
+        # 1. Quantidade total de pilotos, escuderias, temporadas
+        total_pilotos = db.execute("SELECT COUNT(*) FROM drivers").fetchone()[0]
+        total_escuderias = db.execute("SELECT COUNT(*) FROM constructors").fetchone()[0]
+        total_temporadas = db.execute(
+            "SELECT COUNT(DISTINCT year) FROM races"
+        ).fetchone()[0]
+
+        # Ano corrente
+        ano_corrente = db.execute("SELECT MAX(year) FROM races").fetchone()[0]
+
+        # 2. Corridas do ano corrente com total de voltas e tempo (race lap count and time)
+        corridas_ano = db.execute(
+            """
+            SELECT name, laps, round(milliseconds/1000.0,2) as tempo_segundos
+            FROM races
+            WHERE year = ?
+            ORDER BY name
+        """,
+            (ano_corrente,),
+        ).fetchall()
+
+        # 3. Escuderias que correram no ano corrente e total de pontos
+        escuderias_pontos = db.execute(
+            """
+            SELECT c.name, SUM(r.points) as total_pontos
+            FROM results r
+            JOIN constructors c ON r.constructorid = c.constructorid
+            JOIN races ra ON r.raceid = ra.raceid
+            WHERE ra.year = ?
+            GROUP BY c.constructorid
+            ORDER BY total_pontos DESC
+        """,
+            (ano_corrente,),
+        ).fetchall()
+
+        # 4. Pilotos que correram no ano corrente e total de pontos
+        pilotos_pontos = db.execute(
+            """
+            SELECT d.forename || ' ' || d.surname as piloto, SUM(r.points) as total_pontos
+            FROM results r
+            JOIN drivers d ON r.driverid = d.driverid
+            JOIN races ra ON r.raceid = ra.raceid
+            WHERE ra.year = ?
+            GROUP BY d.driverid
+            ORDER BY total_pontos DESC
+        """,
+            (ano_corrente,),
+        ).fetchall()
+
+        resumo = {
+            "Total de pilotos": total_pilotos,
+            "Total de escuderias": total_escuderias,
+            "Total de temporadas": total_temporadas,
+            "Ano corrente": ano_corrente,
+            "Corridas do ano corrente": corridas_ano,
+            "Escuderias e pontos": escuderias_pontos,
+            "Pilotos e pontos": pilotos_pontos,
+        }
+
+    elif tipo == "Escuderia":
+        escuderia = user["idoriginal"]
+
+        # 1. Quantidade de vitórias da escuderia
+        vitórias = db.execute(
+            """
+            SELECT COUNT(*)
+            FROM results r
+            JOIN constructors c ON r.constructorid = c.constructorid
+            WHERE c.constructorref = ?
+            AND r.position = 1
+        """,
+            (escuderia,),
+        ).fetchone()[0]
+
+        # 2. Quantidade de pilotos diferentes que já correram pela escuderia
+        pilotos_distintos = db.execute(
+            """
+            SELECT COUNT(DISTINCT r.driverid)
+            FROM results r
+            JOIN constructors c ON r.constructorid = c.constructorid
+            WHERE c.constructorref = ?
+        """,
+            (escuderia,),
+        ).fetchone()[0]
+
+        # 3. Primeiro e último ano com dados da escuderia (pela tabela results -> joined races)
+        primeiro_ano = db.execute(
+            """
+            SELECT MIN(ra.year)
+            FROM results r
+            JOIN races ra ON r.raceid = ra.raceid
+            JOIN constructors c ON r.constructorid = c.constructorid
+            WHERE c.constructorref = ?
+        """,
+            (escuderia,),
+        ).fetchone()[0]
+
+        ultimo_ano = db.execute(
+            """
+            SELECT MAX(ra.year)
+            FROM results r
+            JOIN races ra ON r.raceid = ra.raceid
+            JOIN constructors c ON r.constructorid = c.constructorid
+            WHERE c.constructorref = ?
+        """,
+            (escuderia,),
+        ).fetchone()[0]
+
+        resumo = {
+            "Vitórias da escuderia": vitórias,
+            "Pilotos diferentes": pilotos_distintos,
+            "Primeiro ano de dados": primeiro_ano,
+            "Último ano de dados": ultimo_ano,
+        }
+        extra_info = f"Escuderia: {escuderia}"
+
+    elif tipo == "Piloto":
+        piloto = user["idoriginal"]
+
+        # 1. Primeiro e último ano com dados do piloto
+        primeiro_ano = db.execute(
+            """
+            SELECT MIN(ra.year)
+            FROM results r
+            JOIN races ra ON r.raceid = ra.raceid
+            WHERE r.driverid = ?
+        """,
+            (piloto,),
+        ).fetchone()[0]
+
+        ultimo_ano = db.execute(
+            """
+            SELECT MAX(ra.year)
+            FROM results r
+            JOIN races ra ON r.raceid = ra.raceid
+            WHERE r.driverid = ?
+        """,
+            (piloto,),
+        ).fetchone()[0]
+
+        # 2. Para cada ano e circuito: quantidade de pontos, vitórias e total de corridas
+        desempenho = db.execute(
+            """
+            SELECT ra.year, ci.name as circuito,
+                   SUM(r.points) as pontos,
+                   SUM(CASE WHEN r.position = 1 THEN 1 ELSE 0 END) as vitorias,
+                   COUNT(*) as total_corridas
+            FROM results r
+            JOIN races ra ON r.raceid = ra.raceid
+            JOIN circuits ci ON ra.circuitid = ci.circuitid
+            WHERE r.driverid = ?
+            GROUP BY ra.year, ci.circuitid
+            ORDER BY ra.year, ci.name
+        """,
+            (piloto,),
+        ).fetchall()
+
+        resumo = {
+            "Primeiro ano de dados": primeiro_ano,
+            "Último ano de dados": ultimo_ano,
+            "Desempenho detalhado": desempenho,
+        }
+        extra_info = f"Piloto ID: {piloto}"
+
+    else:
+        extra_info = "Tipo desconhecido"
+        resumo = {}
+
     return render_template("dashboard.html", user=user, extra=extra_info, resumo=resumo)
 
 
@@ -146,37 +276,8 @@ def cadastrar_piloto():
             close_db()
     return render_template("cadastrar_piloto.html", msg=msg)
 
-@app.route("/consultar_piloto", methods=["GET", "POST"])
-def consultar_piloto():
-    if "user" not in session or session["user"]["tipo"] != "Escuderia":
-        return redirect("/")
-    resultados = []
-    msg = ""
-    if request.method == "POST":
-        forename = request.form["forename"].strip().lower()
-        escuderia = session["user"]["idoriginal"]
-        db = get_db()
-        try:
-            with db.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT d.Forename, d.Surname, d.Dob, d.Nationality
-                    FROM Results r
-                    JOIN Driver d ON r.DriverId = d.DriverId
-                    JOIN Constructors c ON r.ConstructorId = c.ConstructorId
-                    WHERE LOWER(d.Forename) = %s AND c.ConstructorId = %s
-                    GROUP BY d.DriverId, d.Forename, d.Surname, d.Dob, d.Nationality
-                    """,
-                    (forename, escuderia),
-                )
-                resultados = cur.fetchall()
-                if not resultados:
-                    msg = "Nenhum piloto encontrado com esse nome e que tenha corrido pela sua escuderia."
-        finally:
-            close_db()
-    return render_template("consultar_forename.html", resultados=resultados, msg=msg)
 
-@app.route("/cadastrar_escuderia", methods=["GET", "POST"])
+@app.route("/admin/cadastrar_escuderia", methods=["GET", "POST"])
 def cadastrar_escuderia():
     if "user" not in session or session["user"]["tipo"] != "Administrador":
         return redirect("/")
@@ -435,77 +536,161 @@ def escuderia_upload_pilotos():
             msg = "Nenhum arquivo enviado."
         else:
             db = get_db()
-            try:
-                with db.cursor(cursor_factory=RealDictCursor) as cur:
-                    csvfile = file.stream.read().decode("utf-8")
-                    csv_reader = csv.reader(StringIO(csvfile))
-                    inseridos = 0
-                    ignorados = []
-                    
-                    for linha in csv_reader:
-                        if len(linha) < 7:
-                            print(f"Linha inválida: {linha}")
-                            continue
-                        
-                        driver_ref, number, code, forename, surname, dob, nationality = linha[:7]
-                        number = number.strip() if number.strip() else None
-                        code = code.strip() if code.strip() else None
-                        dob = dob.strip()
-                        
-                        # Verifica se o piloto já existe
-                        cur.execute(
-                            """
-                            SELECT 1 FROM Driver 
-                            WHERE Forename = %s AND Surname = %s
-                            """,
-                            (forename, surname),
-                        )
-                        existe = cur.fetchone()
-                        
-                        if existe:
-                            ignorados.append(f"{forename} {surname}")
-                            print(f"Piloto ignorado: {forename} {surname}")
-                            continue
-                        
-                        try:
-                            # Insere na tabela Driver
-                            cur.execute(
-                                """
-                                INSERT INTO Driver (DriverRef, Number, Code, Forename, Surname, Dob, Nationality)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                                RETURNING DriverId
-                                """,
-                                (driver_ref, number, code, forename, surname, dob, nationality),
-                            )
-                            driver_id = cur.fetchone()['DriverId']
-                            print(f"Piloto inserido: {forename} {surname}, DriverId: {driver_id}")
-                            
-                            # Insere na tabela Users com senha criptografada
-                            cur.execute(
-                                """
-                                INSERT INTO Users (login, password, tipo, idoriginal)
-                                VALUES (%s, crypt(%s, gen_salt('bf')), %s, %s)
-                                """,
-                                (f"{driver_ref}_d", driver_ref, "Piloto", driver_id),
-                            )
-                            db.commit()
-                            inseridos += 1
-                        except Exception as e:
-                            db.rollback()
-                            ignorados.append(f"{forename} {surname}")
-                            print(f"Erro ao inserir {forename} {surname}: {e}")
-                    
-                    msg = f"{inseridos} pilotos inseridos com sucesso."
-                    if ignorados:
-                        msg += " Já existentes: " + ", ".join(ignorados)
-                    print(f"Mensagem final: {msg}")
-            except Exception as e:
-                msg = f"Erro ao processar o arquivo: {e}"
-                print(f"Erro geral: {e}")
-            finally:
-                close_db()
-    
-    return render_template("upload_pilotos.html", user=user, msg=msg)
+            escuderia_ref = session["user"]["idoriginal"]
+            csvfile = file.stream.read().decode("utf-8").splitlines()
+            reader = csv.reader(csvfile)
+
+            inseridos = 0
+            ignorados = []
+
+            for linha in reader:
+                if len(linha) < 7:
+                    continue
+                driverref, number, code, forename, surname, dob, nationality = linha[:7]
+                number = number if number.strip() else None
+                code = code if code.strip() else None
+                dob = dob.strip()
+
+                # Verifica se nome e sobrenome já existem
+                existe = db.execute(
+                    "SELECT 1 FROM drivers WHERE forename = ? AND surname = ?",
+                    (forename, surname),
+                ).fetchone()
+
+                if existe:
+                    ignorados.append(f"{forename} {surname}")
+                    continue
+
+                try:
+                    db.execute(
+                        """
+                        INSERT INTO drivers (driverref, number, code, forename, surname, dob, nationality)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (driverref, number, code, forename, surname, dob, nationality),
+                    )
+
+                    db.execute(
+                        """
+                        INSERT INTO users (login, password, tipo, idoriginal)
+                        VALUES (?, ?, ?, ?)
+                        """,
+                        (f"{driverref}_d", driverref, "Piloto", driverref),
+                    )
+
+                    db.commit()
+                    inseridos += 1
+                except sqlite3.IntegrityError:
+                    ignorados.append(f"{forename} {surname}")
+
+            msg = f"{inseridos} pilotos inseridos com sucesso."
+            if ignorados:
+                msg += " Já existentes: " + ", ".join(ignorados)
+
+    return render_template("upload_pilotos.html", msg=msg)
+
+
+# Relatório 4: pilotos da escuderia com contagem de vitórias
+@app.route("/escuderia/relatorio4")
+def escuderia_relatorio4():
+    if "user" not in session or session["user"]["tipo"] != "Escuderia":
+        return redirect("/")
+    escuderia = session["user"]["idoriginal"]
+    db = get_db()
+
+    # SQL para contar vitórias (posição = 1)
+    pilotos = db.execute(
+        """
+        SELECT d.forename || ' ' || d.surname AS piloto,
+               COUNT(*) AS vitorias
+        FROM results r
+        JOIN drivers d ON r.driverid = d.driverid
+        JOIN constructors c ON r.constructorid = c.constructorid
+        WHERE c.constructorref = ?
+          AND r.position = 1
+        GROUP BY d.driverid
+        ORDER BY vitorias DESC
+    """,
+        (escuderia,),
+    ).fetchall()
+
+    return render_template("relatorio4.html", pilotos=pilotos)
+
+
+# Relatório 5: resultados por status na escuderia
+@app.route("/escuderia/relatorio5")
+def escuderia_relatorio5():
+    if "user" not in session or session["user"]["tipo"] != "Escuderia":
+        return redirect("/")
+    escuderia = session["user"]["idoriginal"]
+    db = get_db()
+
+    resultados = db.execute(
+        """
+        SELECT s.status_name, COUNT(*) AS total
+        FROM results r
+        JOIN status s ON r.statusid = s.statusid
+        JOIN constructors c ON r.constructorid = c.constructorid
+        WHERE c.constructorref = ?
+        GROUP BY s.status_name
+        ORDER BY total DESC
+    """,
+        (escuderia,),
+    ).fetchall()
+
+    return render_template("relatorio5.html", resultados=resultados)
+
+
+# -------------------------------PILOTO--------------------------
+@app.route("/piloto/relatorio6")
+def piloto_relatorio6():
+    if "user" not in session or session["user"]["tipo"] != "Piloto":
+        return redirect("/")
+    piloto_id = session["user"]["idoriginal"]
+    db = get_db()
+
+    # Relatório 6: Pontos por ano e corrida
+    resultados = db.execute(
+        """
+        SELECT r.year,
+               ra.name AS corrida,
+               SUM(res.points) AS pontos
+        FROM results res
+        JOIN races ra ON res.raceId = ra.raceId
+        JOIN races r ON ra.raceId = r.raceId
+        WHERE res.driverId = ?
+        GROUP BY r.year, ra.name
+        ORDER BY r.year, pontos DESC
+        """,
+        (piloto_id,),
+    ).fetchall()
+
+    return render_template("relatorio6.html", resultados=resultados)
+
+
+@app.route("/piloto/relatorio7")
+def piloto_relatorio7():
+    if "user" not in session or session["user"]["tipo"] != "Piloto":
+        return redirect("/")
+    piloto_id = session["user"]["idoriginal"]
+    db = get_db()
+
+    # Relatório 7: Quantidade de resultados por status para o piloto
+    resultados = db.execute(
+        """
+        SELECT s.status,
+               COUNT(*) AS total
+        FROM results res
+        JOIN status s ON res.statusId = s.statusId
+        WHERE res.driverId = ?
+        GROUP BY s.status
+        ORDER BY total DESC
+        """,
+        (piloto_id,),
+    ).fetchall()
+
+    return render_template("relatorio7.html", resultados=resultados)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Upload de Pilotos</title>
   <style>
     body {
@@ -12,56 +12,153 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
+      padding: 40px 20px;
     }
     .container {
       background-color: white;
-      padding: 40px;
+      padding: 40px 35px;
       border-radius: 12px;
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
       text-align: center;
       max-width: 500px;
       width: 100%;
+      box-sizing: border-box;
     }
     h2 {
-      margin-bottom: 20px;
-      color: #333;
+      margin-bottom: 30px;
+      color: #007bff;
+      font-weight: 700;
     }
+    /* Esconde o input file original */
     input[type="file"] {
-      margin: 10px 0;
+      display: none;
+    }
+    /* Botão customizado para escolher arquivo com azul claro dos relatórios */
+    .custom-file-upload {
+      display: inline-block;
+      padding: 12px 30px;
+      cursor: pointer;
+      background-color: #dbe6fd;
+      color: #007bff;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 2px solid #007bff;
+      box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+      transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .custom-file-upload:hover,
+    .custom-file-upload:focus {
+      background-color: #c6d9fc;
+      color: #0056b3;
+      border-color: #0056b3;
+      box-shadow: 0 4px 12px rgba(0, 86, 179, 0.4);
+      outline: none;
+    }
+    /* Nome do arquivo selecionado */
+    #file-name {
+      font-size: 0.95em;
+      color: #555;
+      margin-bottom: 20px;
+      min-height: 1.2em;
     }
     button {
-      background-color: #007bff;
+      background: linear-gradient(135deg, #0052cc, #007bff);
       color: white;
-      padding: 10px 20px;
+      padding: 12px 28px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+      width: 100%;
+      max-width: 220px;
+      margin: 0 auto 20px;
+      display: block;
     }
-    button:hover {
-      background-color: #0056b3;
+    button:hover,
+    button:focus {
+      background: linear-gradient(135deg, #003d99, #0056b3);
+      box-shadow: 0 6px 14px rgba(0, 86, 179, 0.5);
     }
     p {
-      margin-top: 15px;
+      margin-top: 20px;
       color: #333;
+      font-size: 1.1em;
     }
     .erro {
-      color: red;
+      color: #d32f2f;
+      font-weight: 600;
+    }
+    a.voltar-dashboard {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 15px;
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      gap: 8px;
+      transition: color 0.3s ease;
+      user-select: none;
+      justify-content: center;
+    }
+    a.voltar-dashboard:hover, a.voltar-dashboard:focus {
+      color: #0056b3;
+      text-decoration: underline;
+      outline: none;
+    }
+    a.voltar-dashboard svg {
+      width: 18px;
+      height: 18px;
+      fill: #007bff;
+      flex-shrink: 0;
+      transition: fill 0.3s ease;
+    }
+    a.voltar-dashboard:hover svg, a.voltar-dashboard:focus svg {
+      fill: #0056b3;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Upload de Pilotos da Escuderia</h2>
-    <form method="POST" enctype="multipart/form-data">
-      <input type="file" name="arquivo" accept=".txt,.csv" required>
-      <br>
+    <form method="POST" enctype="multipart/form-data" autocomplete="off">
+      <label for="arquivo" class="custom-file-upload" tabindex="0">
+        Escolher arquivo
+      </label>
+      <input type="file" id="arquivo" name="arquivo" accept=".txt,.csv" required>
+      <div id="file-name"></div>
       <button type="submit">Enviar</button>
     </form>
     {% if msg %}
       <p class="{{ 'erro' if 'Erro' in msg else '' }}">{{ msg }}</p>
     {% endif %}
+    <a href="/dashboard" class="voltar-dashboard" title="Voltar ao dashboard">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" >
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Voltar ao dashboard
+    </a>
   </div>
+
+  <script>
+    const inputFile = document.getElementById('arquivo');
+    const fileNameDisplay = document.getElementById('file-name');
+
+    inputFile.addEventListener('change', () => {
+      if (inputFile.files.length > 0) {
+        fileNameDisplay.textContent = `Arquivo selecionado: ${inputFile.files[0].name}`;
+      } else {
+        fileNameDisplay.textContent = '';
+      }
+    });
+  </script>
 </body>
 </html>

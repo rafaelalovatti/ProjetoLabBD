@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Relatório 4 – Vitórias por Piloto</title>
+  <title>Relatório 6 – Pontos por Ano e Corrida</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -69,32 +69,36 @@
       transition: background 0.3s ease, box-shadow 0.3s ease;
       user-select: none;
       font-size: 16px;
+      cursor: pointer;
     }
     a.back-link:hover, a.back-link:focus {
       background: linear-gradient(135deg, #003d99, #0056b3);
       box-shadow: 0 6px 14px rgba(0,86,179,0.5);
+      outline: none;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Relatório 4 – Vitórias dos Pilotos</h2>
-
-    {% if pilotos %}
+    <h2>Relatório 6 – Pontos obtidos por ano e corrida</h2>
+    {% if resultados %}
       <table>
         <thead>
-          <tr><th>Piloto</th><th>Vitórias</th></tr>
+          <tr><th>Ano</th><th>Corrida</th><th>Pontos</th></tr>
         </thead>
         <tbody>
-          {% for p in pilotos %}
-            <tr><td>{{ p[0] }}</td><td>{{ p[1] }}</td></tr>
+          {% for r in resultados %}
+            <tr>
+              <td>{{ r.year }}</td>
+              <td>{{ r.corrida }}</td>
+              <td>{{ r.pontos }}</td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     {% else %}
-      <p>Sem vitórias registradas para sua escuderia.</p>
+      <p>Sem pontos registrados para o piloto.</p>
     {% endif %}
-
     <a class="back-link" href="/dashboard">Voltar</a>
   </div>
 </body>
