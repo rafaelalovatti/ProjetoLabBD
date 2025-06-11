@@ -15,46 +15,55 @@
       min-height: 100vh;
       padding-top: 40px;
     }
+
     .container {
       background-color: white;
       padding: 30px 40px;
       border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
       max-width: 700px;
       width: 100%;
     }
+
     h2 {
       margin-top: 0;
       color: #333;
       margin-bottom: 15px;
     }
+
     p {
       color: #555;
       margin: 8px 0;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 25px;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 8px 12px;
       text-align: left;
     }
+
     th {
       background-color: #f0f2f5;
       color: #333;
     }
+
     .section {
       margin-bottom: 30px;
     }
+
     .summary-cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 20px;
       margin-top: 15px;
     }
+
     .summary-card {
       background-color: #f0f4fb;
       border-left: 5px solid #007bff;
@@ -63,20 +72,24 @@
       box-shadow: 0 4px 10px rgba(0, 123, 255, 0.1);
       transition: transform 0.2s ease;
     }
+
     .summary-card:hover {
       transform: translateY(-3px);
     }
+
     .summary-card h4 {
       margin: 0 0 5px;
       color: #333;
       font-size: 16px;
     }
+
     .summary-card p {
       margin: 0;
       font-size: 18px;
       font-weight: bold;
       color: #0056b3;
     }
+
     .actions {
       margin-top: 30px;
       text-align: center;
@@ -85,6 +98,7 @@
       gap: 20px;
       flex-wrap: wrap;
     }
+
     .actions a {
       display: flex;
       align-items: center;
@@ -95,21 +109,24 @@
       color: white;
       font-weight: 600;
       border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,123,255,0.3);
+      box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
       transition: background 0.3s ease, box-shadow 0.3s ease;
       font-size: 16px;
       user-select: none;
     }
+
     .actions a:hover, .actions a:focus {
       background: linear-gradient(135deg, #003d99, #0056b3);
-      box-shadow: 0 6px 14px rgba(0,86,179,0.5);
+      box-shadow: 0 6px 14px rgba(0, 86, 179, 0.5);
     }
+
     .actions svg {
       width: 20px;
       height: 20px;
       fill: white;
       flex-shrink: 0;
     }
+
     .footer-links {
       text-align: center;
       margin-top: 40px;
@@ -118,6 +135,7 @@
       gap: 30px;
       flex-wrap: wrap;
     }
+
     .footer-links a {
       text-decoration: none;
       color: #007bff;
@@ -125,39 +143,33 @@
       font-size: 16px;
       transition: color 0.3s ease;
     }
+
     .footer-links a:hover {
       color: #0056b3;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h2>Bem-vindo, {{ user['login'] }}</h2>
-    <p>{{ extra_info }}</p>
+    <p>{{ extra }}</p>
 
-    {% if user['tipo'] == "administrador" %}
+    {% if user['tipo'] == "Administrador" %}
+      <!-- Resumo Admin -->
       <div class="section">
         <h3>Resumo geral</h3>
         <div class="summary-cards">
-          <div class="summary-card">
-            <h4>Total de Pilotos</h4>
-            <p>{{ resumo['Total de pilotos'] | default('N/A') }}</p>
-          </div>
-          <div class="summary-card">
-            <h4>Total de Escuderias</h4>
-            <p>{{ resumo['Total de equipes'] | default('N/A') }}</p>
-          </div>
-          <div class="summary-card">
-            <h4>Total de Temporadas</h4>
-            <p>{{ resumo['Total de temporadas'] | default('N/A') }}</p>
-          </div>
-          <div class="summary-card">
-            <h4>Ano Corrente</h4>
-            <p>{{ resumo['Ano corrente'] | default('N/A') }}</p>
-          </div>
+          {% for titulo, valor in resumo.items() if titulo.startswith('Total') or titulo == 'Ano corrente' %}
+            <div class="summary-card">
+              <h4>{{ titulo }}</h4>
+              <p>{{ valor }}</p>
+            </div>
+          {% endfor %}
         </div>
       </div>
 
+      <!-- Corridas -->
       <div class="section">
         <h3>Corridas do ano corrente</h3>
         <table>
@@ -165,121 +177,112 @@
             <tr><th>Corrida</th><th>Voltas</th><th>Tempo (segundos)</th></tr>
           </thead>
           <tbody>
-            {% for c in resumo['Correidas do ano'] | default([]) %}
-              <tr><td>{{ c['name'] | default('N/A') }}</td><td>{{ c['laps'] | default('N/A') }}</td><td>{{ c['tempo_segundos'] | default('N/A') }}</td></tr>
+            {% for c in resumo["Corridas do ano corrente"] %}
+              <tr>
+                <td>{{ c["name"] }}</td>
+                <td>{{ c["total_voltas"] }}</td>
+                <td>{{ c["tempo_segundos"] }}</td>
+              </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
+      <!-- Escuderias -->
       <div class="section">
-        <h3>Escuderias e pontos (Ano {{ resumo['Ano corrente'] | default('N/A') }})</h3>
+        <h3>Escuderias e pontos (Ano {{ resumo["Ano corrente"] }})</h3>
         <table>
           <thead>
             <tr><th>Escuderia</th><th>Total de pontos</th></tr>
-          </thead Voltage
-            {% for e in resumo['Escuderias e pontos'] | default([]) %}
-              <tr><td>{{ e['name'] | default('N/A') }}</td><td>{{ e['total_pontos'] | default('N/A') }}</td></tr>
+          </thead>
+          <tbody>
+            {% for e in resumo["Escuderias e pontos"] %}
+              <tr><td>{{ e["name"] }}</td><td>{{ e["total_pontos"] }}</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
+      <!-- Pilotos -->
       <div class="section">
-        <h3>Pilotos e pontos (Ano {{ resumo['Ano corrente'] | default('N/A') }})</h3>
+        <h3>Pilotos e pontos (Ano {{ resumo["Ano corrente"] }})</h3>
         <table>
           <thead>
             <tr><th>Piloto</th><th>Total de pontos</th></tr>
           </thead>
           <tbody>
-            {% for p in resumo['Pilotos e pontos'] | default([]) %}
-              <tr><td>{{ p['piloto'] | default('N/A') }}</td><td>{{ p['total_pontos'] | default('N/A') }}</td></tr>
+            {% for p in resumo["Pilotos e pontos"] %}
+              <tr><td>{{ p["piloto"] }}</td><td>{{ p["total_pontos"] }}</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
+      <!-- Ações Admin -->
       <div class="actions">
         <a href="/admin/cadastrar_escuderia" title="Cadastrar Escuderia">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <svg viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Cadastrar Escuderia
         </a>
         <a href="/admin/cadastrar_piloto" title="Cadastrar Piloto">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <svg viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Cadastrar Piloto
         </a>
       </div>
 
     {% elif user['tipo'] == "Escuderia" %}
+      <!-- Resumo Escuderia -->
       <div class="section">
-        <h3>Resumo da Escuderia {{ extra_info }}</h3>
+        <h3>Resumo da Escuderia {{ extra }}</h3>
         <div class="summary-cards">
-          <div class="summary-card">
-            <h4>Vitórias da escuderia</h4>
-            <p>{{ resumo["Vitórias da escuderia"] }}</p>
-          </div>
-          <div class="summary-card">
-            <h4>Quantidade de pilotos diferentes</h4>
-            <p>{{ resumo["Quantidade de pilotos diferentes"] }}</p>
-          </div>
-          <div class="summary-card">
-            <h4>Primeiro ano de dados</h4>
-            <p>{{ resumo["Primeiro ano de dados"] }}</p>
-          </div>
-          <div class="summary-card">
-            <h4>Último ano de dados</h4>
-            <p>{{ resumo["Último ano de dados"] }}</p>
-          </div>
+          {% for key in ["Vitórias da escuderia", "Quantidade de pilotos diferentes", "Primeiro ano de dados", "Último ano de dados"] %}
+            <div class="summary-card">
+              <h4>{{ key }}</h4>
+              <p>{{ resumo[key] }}</p>
+            </div>
+          {% endfor %}
         </div>
       </div>
 
+      <!-- Ações Escuderia -->
       <div class="actions">
         <a href="/escuderia/consultar_piloto" title="Consultar Pilotos">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 001.48-5.34C15.27 5.01 12.28 2 8.64 2S2 5.01 2 8.39c0 3.37 2.99 6.38 6.64 6.38 1.61 0 3.08-.68 4.14-1.76l.27.28v.79l5 4.99L20.49 19l-4.99-5zM8.64 13a4.6 4.6 0 01-4.57-4.58 4.6 4.6 0 014.57-4.58 4.6 4.6 0 014.58 4.58 4.6 4.6 0 01-4.58 4.58z" fill="white"/>
-          </svg>
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 001.48-5.34C15.27 5.01 12.28 2 8.64 2S2 5.01 2 8.39c0 3.37 2.99 6.38 6.64 6.38 1.61 0 3.08-.68 4.14-1.76l.27.28v.79l5 4.99L20.49 19l-4.99-5zM8.64 13a4.6 4.6 0 01-4.57-4.58 4.6 4.6 0 014.57-4.58 4.6 4.6 0 014.58 4.58 4.6 4.6 0 01-4.58 4.58z" fill="white"/></svg>
           Consultar Pilotos
         </a>
         <a href="/escuderia/upload_pilotos" title="Inserir Pilotos por Arquivo">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 20h14v-2H5v2zm7-18v12m-4-4l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18v12m-4-4l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Inserir Pilotos por Arquivo
         </a>
       </div>
 
     {% elif user['tipo'] == "Piloto" %}
+      <!-- Resumo Piloto -->
       <div class="section">
-        <h3>Resumo do Piloto {{ extra_info }}</h3>
-        <p>Debug: {{ resumo }}</p>
+        <h3>Resumo do Piloto {{ extra }}</h3>
         <div class="summary-cards">
-          <div class="summary-card">
-            <h4>Primeiro ano de dados</h4>
-            <p>{{ resumo["Primeiro ano de dados"] | default('N/A') }}</p>
-          </div>
-          <div class="summary-card">
-            <h4>Último ano de dados</h4>
-            <p>{{ resumo["Último ano de dados"] | default('N/A') }}</p>
-          </div>
+          {% for key in ["Primeiro ano de dados", "Último ano de dados"] %}
+            <div class="summary-card">
+              <h4>{{ key }}</h4>
+              <p>{{ resumo[key] }}</p>
+            </div>
+          {% endfor %}
         </div>
 
+        <!-- Desempenho -->
         <h4 style="margin-top: 30px; color: #333;">Desempenho detalhado por ano e circuito</h4>
         <table>
           <thead>
             <tr><th>Ano</th><th>Circuito</th><th>Pontos</th><th>Vitórias</th><th>Total Corridas</th></tr>
           </thead>
           <tbody>
-            {% for d in resumo["Desempenho detalhado"] | default([]) %}
+            {% for d in resumo["Desempenho detalhado"] %}
               <tr>
-                <td>{{ d["year"] | default('N/A') }}</td>
-                <td>{{ d["circuito"] | default('N/A') }}</td>
-                <td>{{ d["pontos"] | default('N/A') }}</td>
-                <td>{{ d["vitorias"] | default('N/A') }}</td>
-                <td>{{ d["total_corridas"] | default('N/A') }}</td>
+                <td>{{ d["Ano"] }}</td>
+                <td>{{ d["Circuito"] }}</td>
+                <td>{{ d["Pontos"] }}</td>
+                <td>{{ d["Vitórias"] }}</td>
+                <td>{{ d["Corridas"] }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -293,6 +296,7 @@
       <p>Tipo de usuário desconhecido.</p>
     {% endif %}
 
+    <!-- Rodapé -->
     <div class="footer-links">
       <a href="/">Voltar ao início</a>
       <a href="/relatorios">Ir para Relatórios</a>

@@ -52,12 +52,20 @@
     tbody tr:hover {
       background-color: #e6f0ff;
     }
-    p {
-      color: #555;
+    .no-data {
+      color: #777;
       font-size: 1.1em;
       margin-bottom: 30px;
+      text-align: center;
     }
-    a.back-link {
+    .footer-links {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
       display: inline-block;
       padding: 12px 30px;
       background: linear-gradient(135deg, #0052cc, #007bff);
@@ -67,11 +75,10 @@
       box-shadow: 0 4px 10px rgba(0,123,255,0.3);
       text-decoration: none;
       transition: background 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
       font-size: 16px;
       cursor: pointer;
     }
-    a.back-link:hover, a.back-link:focus {
+    .footer-links a:hover, .footer-links a:focus {
       background: linear-gradient(135deg, #003d99, #0056b3);
       box-shadow: 0 6px 14px rgba(0,86,179,0.5);
       outline: none;
@@ -81,7 +88,7 @@
 <body>
   <div class="container">
     <h2>Relatório 6 – Pontos obtidos por ano e corrida</h2>
-    {% if resultados %}
+    {% if resultados|length > 0 %}
       <table>
         <thead>
           <tr><th>Ano</th><th>Corrida</th><th>Pontos</th></tr>
@@ -90,16 +97,19 @@
           {% for r in resultados %}
             <tr>
               <td>{{ r.year }}</td>
-              <td>{{ r.corrida }}</td>
-              <td>{{ r.pontos }}</td>
+              <td>{{ r.racename }}</td>
+              <td>{{ r.points }}</td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     {% else %}
-      <p>Sem pontos registrados para o piloto.</p>
+      <p class="no-data">Sem pontos registrados para o piloto.</p>
     {% endif %}
-    <a class="back-link" href="/dashboard">Voltar</a>
+    <div class="footer-links">
+      <a href="/dashboard">Voltar ao Dashboard</a>
+      <a href="/relatorios">Ir para Relatórios</a>
+    </div>
   </div>
 </body>
 </html>
